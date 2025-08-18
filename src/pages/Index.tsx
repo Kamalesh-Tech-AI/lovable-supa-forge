@@ -1,12 +1,32 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { Navigation } from "@/components/layout/Navigation";
+import { BuyProjectsPage } from "@/components/buy/BuyProjectsPage";
+import { SellProjectsPage } from "@/components/sell/SellProjectsPage";
+import { CustomWorkPage } from "@/components/custom/CustomWorkPage";
+import { DashboardPage } from "@/components/dashboard/DashboardPage";
+import { useState } from "react";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("buy");
+
+  const renderActiveTab = () => {
+    switch (activeTab) {
+      case "buy":
+        return <BuyProjectsPage />;
+      case "sell":
+        return <SellProjectsPage />;
+      case "custom":
+        return <CustomWorkPage />;
+      case "dashboard":
+        return <DashboardPage />;
+      default:
+        return <BuyProjectsPage />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
+      {renderActiveTab()}
     </div>
   );
 };
