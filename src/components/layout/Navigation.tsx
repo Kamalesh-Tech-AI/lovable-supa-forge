@@ -8,7 +8,16 @@ interface NavigationProps {
   onTabChange: (tab: string) => void;
 }
 
-export const Navigation = ({ activeTab, onTabChange }: NavigationProps) => {
+export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) => {
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You've been signed out successfully.",
+    });
+  };
   const [isLoggedIn] = useState(true); // Will be replaced with actual auth
 
   const navItems = [
