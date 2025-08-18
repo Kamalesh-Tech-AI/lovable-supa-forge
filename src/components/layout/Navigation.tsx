@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Upload, Wrench, LayoutDashboard, User } from "lucide-react";
-import { useState } from "react";
+import { ShoppingCart, Upload, Wrench, LayoutDashboard, User, LogOut } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  user?: any;
 }
 
 export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) => {
@@ -18,7 +20,6 @@ export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) =>
       description: "You've been signed out successfully.",
     });
   };
-  const [isLoggedIn] = useState(true); // Will be replaced with actual auth
 
   const navItems = [
     { id: "buy", label: "Buy Projects", icon: ShoppingCart },
@@ -64,17 +65,21 @@ export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) =>
         </div>
 
         <div className="flex items-center space-x-4">
-          {isLoggedIn ? (
+          {user ? (
             <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon">
-                <User className="h-4 w-4" />
+              <span className="text-sm text-muted-foreground">
+                {user.email}
+              </span>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
               </Button>
             </div>
           ) : (
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost">Sign In</Button>
-              <Button>Get Started</Button>
-            </div>
+            <Button variant="outline" size="sm" onClick={() => onTabChange('auth')}>
+              <User className="h-4 w-4 mr-2" />
+              Sign In
+            </Button>
           )}
         </div>
       </div>
