@@ -7,9 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, DollarSign, Tags, Image, CheckCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const SellProjectsPage = () => {
+  const { toast } = useToast();
+  const [user, setUser] = useState(null);
   const [projectData, setProjectData] = useState({
     title: "",
     description: "",
@@ -20,6 +24,15 @@ export const SellProjectsPage = () => {
     demoCommand: "",
     zipFile: null
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   const categories = [
     "E-commerce", "Portfolio", "Dashboard", "Landing Page", "Blog",
@@ -43,6 +56,71 @@ export const SellProjectsPage = () => {
     { id: 3, title: "Pricing", icon: DollarSign, completed: false },
     { id: 4, title: "Review", icon: CheckCircle, completed: false }
   ];
+
+  const handleSubmit = async (isDraft = false) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to submit a project.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!isDraft && (!projectData.title || !projectData.description || !projectData.price)) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .insert({
+          title: projectData.title,
+          description: projectData.description,
+          category: projectData.category,
+          tech_stack: projectData.techStack,
+          features: projectData.features,
+          price_inr: parseInt(projectData.price) || 0,
+          status: isDraft ? 'draft' : 'pending',
+          seller_id: user.id
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: isDraft ? "Draft saved successfully!" : "Project submitted!",
+        description: isDraft ? "Your project has been saved as a draft." : "Your project has been submitted for review.",
+      });
+
+      // Reset form
+      setProjectData({
+        title: "",
+        description: "",
+        category: "",
+        techStack: [],
+        features: [],
+        price: "",
+        demoCommand: "",
+        zipFile: null
+      });
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit project. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="container py-8">
@@ -279,11 +357,19 @@ export const SellProjectsPage = () => {
               </div>
 
               <div className="flex justify-between pt-6">
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={() => handleSubmit(true)}
+                  disabled={isSubmitting}
+                >
                   Save as Draft
                 </Button>
-                <Button className="bg-gradient-to-r from-primary to-primary/80">
-                  Submit for Review
+                <Button 
+                  className="bg-gradient-to-r from-primary to-primary/80"
+                  onClick={() => handleSubmit(false)}
+                  disabled={isSubmitting || !projectData.title || !projectData.description || !projectData.price}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit for Review"}
                 </Button>
               </div>
             </CardContent>

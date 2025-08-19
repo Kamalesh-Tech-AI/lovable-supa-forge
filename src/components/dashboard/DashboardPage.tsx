@@ -16,10 +16,51 @@ import {
   DollarSign,
   Eye
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const DashboardPage = () => {
-  const [userRole] = useState("buyer"); // Will be replaced with actual user role
+  const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [userProjects, setUserProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getUserData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+
+        if (user) {
+          // Get user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          setUserProfile(profile);
+
+          // Get user's projects if they're a seller
+          if (profile?.role === 'seller') {
+            const { data: projects } = await supabase
+              .from('projects')
+              .select('*')
+              .eq('seller_id', user.id)
+              .order('created_at', { ascending: false });
+            
+            setUserProjects(projects || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUserData();
+  }, []);
 
   const buyerStats = {
     totalPurchases: 12,
@@ -250,7 +291,7 @@ export const DashboardPage = () => {
             <div className="flex items-center space-x-2">
               <Upload className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-2xl font-bold">{sellerStats.totalProjects}</p>
+                <p className="text-2xl font-bold">{userProjects.length}</p>
                 <p className="text-sm text-muted-foreground">Projects Listed</p>
               </div>
             </div>
@@ -296,13 +337,34 @@ export const DashboardPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Your latest sales and project submissions</CardDescription>
+          <CardTitle>Your Projects</CardTitle>
+          <CardDescription>Manage your project listings</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground py-8">
-            No recent activity to show. Start by uploading your first project!
-          </p>
+          {userProjects.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">
+              No projects yet. Start by uploading your first project!
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {userProjects.slice(0, 3).map((project) => (
+                <div key={project.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div>
+                    <h4 className="font-medium">{project.title}</h4>
+                    <p className="text-sm text-muted-foreground">{project.category}</p>
+                    <p className="text-lg font-bold text-primary">₹{project.price_inr?.toLocaleString()}</p>
+                  </div>
+                  <Badge variant={
+                    project.status === 'approved' ? 'default' : 
+                    project.status === 'pending' ? 'secondary' :
+                    'outline'
+                  }>
+                    {project.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -317,7 +379,17 @@ export const DashboardPage = () => {
         </p>
       </div>
 
-      {userRole === "buyer" ? <BuyerDashboard /> : <SellerDashboard />}
+      {loading ? (
+        <div className="text-center py-8">Loading...</div>
+      ) : !user ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Please sign in to view your dashboard.</p>
+        </div>
+      ) : userProfile?.role === "seller" ? (
+        <SellerDashboard />
+      ) : (
+        <BuyerDashboard />
+      )}
     </div>
   );
 };

@@ -25,7 +25,11 @@ interface ProjectMatch {
   screenshot: string;
 }
 
-export const RequirementsChat = () => {
+interface RequirementsChatProps {
+  onComplete?: (requirements: any) => void;
+}
+
+export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',

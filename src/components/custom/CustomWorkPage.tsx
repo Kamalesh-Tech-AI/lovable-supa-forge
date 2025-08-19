@@ -8,10 +8,31 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Plus, MessageSquare, Clock, CheckCircle, User, Star } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export const CustomWorkPage = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("create");
+  const [user, setUser] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requestData, setRequestData] = useState({
+    title: "",
+    description: "",
+    budget: "",
+    timeline: "",
+    category: "",
+    techStack: ""
+  });
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   const mockRequests = [
     {
@@ -35,6 +56,58 @@ export const CustomWorkPage = () => {
     }
   ];
 
+  const handleSubmitRequest = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to create a custom request.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!requestData.title || !requestData.description || !requestData.budget) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Here you would typically create a custom_requests table
+      // For now, we'll just show a success message
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+
+      toast({
+        title: "Request submitted!",
+        description: "Your custom project request has been submitted. We'll match you with suitable developers soon.",
+      });
+
+      // Reset form
+      setRequestData({
+        title: "",
+        description: "",
+        budget: "",
+        timeline: "",
+        category: "",
+        techStack: ""
+      });
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit request. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const CreateRequestForm = () => (
     <Card>
       <CardHeader>
@@ -50,12 +123,14 @@ export const CustomWorkPage = () => {
             <Input 
               id="project-title"
               placeholder="e.g., Custom Inventory Management System"
+              value={requestData.title}
+              onChange={(e) => setRequestData(prev => ({ ...prev, title: e.target.value }))}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="budget">Budget (₹) *</Label>
-            <Select>
+            <Select value={requestData.budget} onValueChange={(value) => setRequestData(prev => ({ ...prev, budget: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select budget range" />
               </SelectTrigger>
@@ -75,13 +150,15 @@ export const CustomWorkPage = () => {
             id="description"
             placeholder="Describe your project requirements, features, and any specific technologies you prefer..."
             className="min-h-32"
+            value={requestData.description}
+            onChange={(e) => setRequestData(prev => ({ ...prev, description: e.target.value }))}
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="timeline">Expected Timeline</Label>
-            <Select>
+            <Select value={requestData.timeline} onValueChange={(value) => setRequestData(prev => ({ ...prev, timeline: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select timeline" />
               </SelectTrigger>
@@ -96,7 +173,7 @@ export const CustomWorkPage = () => {
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select>
+            <Select value={requestData.category} onValueChange={(value) => setRequestData(prev => ({ ...prev, category: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -113,14 +190,22 @@ export const CustomWorkPage = () => {
 
         <div className="space-y-2">
           <Label>Preferred Technologies (Optional)</Label>
-          <Input placeholder="e.g., React, Node.js, PostgreSQL" />
+          <Input 
+            placeholder="e.g., React, Node.js, PostgreSQL" 
+            value={requestData.techStack}
+            onChange={(e) => setRequestData(prev => ({ ...prev, techStack: e.target.value }))}
+          />
         </div>
 
         <div className="flex justify-between pt-6">
-          <Button variant="outline">Save as Draft</Button>
-          <Button className="bg-gradient-to-r from-primary to-primary/80">
+          <Button variant="outline" disabled={isSubmitting}>Save as Draft</Button>
+          <Button 
+            className="bg-gradient-to-r from-primary to-primary/80"
+            onClick={handleSubmitRequest}
+            disabled={isSubmitting || !requestData.title || !requestData.description || !requestData.budget}
+          >
             <Plus className="h-4 w-4 mr-2" />
-            Post Request
+            {isSubmitting ? "Submitting..." : "Post Request"}
           </Button>
         </div>
       </CardContent>
