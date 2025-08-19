@@ -16,8 +16,8 @@ export const BuyProjectsPage = () => {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
-    category: "",
-    priceRange: "",
+    category: "all",
+    priceRange: "all",
     sortBy: "latest"
   });
 
@@ -42,11 +42,11 @@ export const BuyProjectsPage = () => {
         query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
-      if (filters.category) {
+      if (filters.category && filters.category !== 'all') {
         query = query.eq('category', filters.category);
       }
 
-      if (filters.priceRange) {
+      if (filters.priceRange && filters.priceRange !== 'all') {
         const [min, max] = filters.priceRange.split('-').map(Number);
         if (max) {
           query = query.gte('price_inr', min).lte('price_inr', max);
@@ -193,7 +193,7 @@ export const BuyProjectsPage = () => {
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All categories</SelectItem>
+              <SelectItem value="all">All categories</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category} value={category.toLowerCase()}>
                   {category}
@@ -210,7 +210,7 @@ export const BuyProjectsPage = () => {
               <SelectValue placeholder="All prices" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All prices</SelectItem>
+              <SelectItem value="all">All prices</SelectItem>
               <SelectItem value="0-10000">₹0 - ₹10,000</SelectItem>
               <SelectItem value="10000-25000">₹10,000 - ₹25,000</SelectItem>
               <SelectItem value="25000-50000">₹25,000 - ₹50,000</SelectItem>
