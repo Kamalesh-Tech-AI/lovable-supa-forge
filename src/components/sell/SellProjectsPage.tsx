@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, DollarSign, Tags, Image, CheckCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,10 +22,16 @@ export const SellProjectsPage = () => {
     features: [],
     price: "",
     demoCommand: "",
-    zipFile: null
+    fileUrl: "",
+    fileName: "",
+    zipFile: null as File | null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  const handleInputChange = useCallback((field: string, value: any) => {
+    setProjectData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   useEffect(() => {
     const getUser = async () => {
@@ -58,7 +64,7 @@ export const SellProjectsPage = () => {
     { id: 4, title: "Review", icon: CheckCircle, completed: false }
   ];
 
-  const handleFileUpload = async (file: File) => {
+  const uploadFileToStorage = async (file: File) => {
     if (!user) {
       toast({
         title: "Authentication required",
@@ -79,7 +85,11 @@ export const SellProjectsPage = () => {
 
       if (uploadError) throw uploadError;
 
-      return fileName;
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-files')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
     } catch (error) {
       toast({
         title: "Upload failed",
@@ -102,10 +112,10 @@ export const SellProjectsPage = () => {
       return;
     }
 
-    if (!isDraft && (!projectData.title || !projectData.description || !projectData.price)) {
+    if (!isDraft && (!projectData.title || !projectData.description || !projectData.price || !projectData.zipFile)) {
       toast({
         title: "Missing required fields",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields and upload a project file.",
         variant: "destructive"
       });
       return;
@@ -118,7 +128,7 @@ export const SellProjectsPage = () => {
       
       // Upload file if provided
       if (projectData.zipFile) {
-        fileUrl = await handleFileUpload(projectData.zipFile);
+        fileUrl = await uploadFileToStorage(projectData.zipFile);
         if (!fileUrl) {
           setIsSubmitting(false);
           return;
@@ -155,6 +165,8 @@ export const SellProjectsPage = () => {
         features: [],
         price: "",
         demoCommand: "",
+        fileUrl: "",
+        fileName: "",
         zipFile: null
       });
 
@@ -257,14 +269,14 @@ export const SellProjectsPage = () => {
                     id="title"
                     placeholder="e.g., Modern E-commerce Dashboard"
                     value={projectData.title}
-                    onChange={(e) => setProjectData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="category">Category *</Label>
                   <Select value={projectData.category} onValueChange={(value) => 
-                    setProjectData(prev => ({ ...prev, category: value }))
+                    handleInputChange('category', value)
                   }>
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -287,7 +299,7 @@ export const SellProjectsPage = () => {
                   placeholder="Describe your project features, use cases, and what makes it special..."
                   className="min-h-32"
                   value={projectData.description}
-                  onChange={(e) => setProjectData(prev => ({ ...prev, description: e.target.value }))}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
                 />
               </div>
 
@@ -364,7 +376,7 @@ export const SellProjectsPage = () => {
                     type="number"
                     placeholder="e.g., 15000"
                     value={projectData.price}
-                    onChange={(e) => setProjectData(prev => ({ ...prev, price: e.target.value }))}
+                    onChange={(e) => handleInputChange('price', e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
                     Platform fee: 15% • You'll receive: ₹{projectData.price ? Math.round(parseInt(projectData.price) * 0.85).toLocaleString() : '0'}
@@ -377,7 +389,7 @@ export const SellProjectsPage = () => {
                     id="demo-command"
                     placeholder="e.g., npm run dev"
                     value={projectData.demoCommand}
-                    onChange={(e) => setProjectData(prev => ({ ...prev, demoCommand: e.target.value }))}
+                    onChange={(e) => handleInputChange('demoCommand', e.target.value)}
                   />
                   <p className="text-xs text-muted-foreground">
                     Command to run your project for screenshot generation
@@ -435,7 +447,7 @@ export const SellProjectsPage = () => {
                 <Button 
                   className="bg-gradient-to-r from-primary to-primary/80"
                   onClick={() => handleSubmit(false)}
-                  disabled={isSubmitting || !projectData.title || !projectData.description || !projectData.price}
+                  disabled={isSubmitting || !projectData.title || !projectData.description || !projectData.price || !projectData.zipFile}
                 >
                   {isSubmitting ? "Submitting..." : "Submit for Review"}
                 </Button>

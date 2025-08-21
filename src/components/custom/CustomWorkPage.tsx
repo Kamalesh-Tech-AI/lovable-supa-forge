@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Plus, MessageSquare, Clock, CheckCircle, User, Star } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,6 +25,10 @@ export const CustomWorkPage = () => {
     category: "",
     techStack: ""
   });
+
+  const handleInputChange = useCallback((field: string, value: string) => {
+    setRequestData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   // Add console.log to debug the input issue
   console.log('Current requestData:', requestData);
@@ -168,13 +172,13 @@ export const CustomWorkPage = () => {
               id="project-title"
               placeholder="e.g., Custom Inventory Management System"
               value={requestData.title}
-              onChange={(e) => setRequestData(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) => handleInputChange('title', e.target.value)}
             />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="budget">Budget (₹) *</Label>
-            <Select value={requestData.budget} onValueChange={(value) => setRequestData(prev => ({ ...prev, budget: value }))}>
+            <Select value={requestData.budget} onValueChange={(value) => handleInputChange('budget', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select budget range" />
               </SelectTrigger>
@@ -195,14 +199,14 @@ export const CustomWorkPage = () => {
             placeholder="Describe your project requirements, features, and any specific technologies you prefer..."
             className="min-h-32"
             value={requestData.description}
-            onChange={(e) => setRequestData(prev => ({ ...prev, description: e.target.value }))}
+            onChange={(e) => handleInputChange('description', e.target.value)}
           />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="timeline">Expected Timeline</Label>
-            <Select value={requestData.timeline} onValueChange={(value) => setRequestData(prev => ({ ...prev, timeline: value }))}>
+            <Select value={requestData.timeline} onValueChange={(value) => handleInputChange('timeline', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select timeline" />
               </SelectTrigger>
@@ -217,7 +221,7 @@ export const CustomWorkPage = () => {
 
           <div className="space-y-2">
             <Label htmlFor="category">Category</Label>
-            <Select value={requestData.category} onValueChange={(value) => setRequestData(prev => ({ ...prev, category: value }))}>
+            <Select value={requestData.category} onValueChange={(value) => handleInputChange('category', value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -237,7 +241,7 @@ export const CustomWorkPage = () => {
           <Input 
             placeholder="e.g., React, Node.js, PostgreSQL" 
             value={requestData.techStack}
-            onChange={(e) => setRequestData(prev => ({ ...prev, techStack: e.target.value }))}
+            onChange={(e) => handleInputChange('techStack', e.target.value)}
           />
         </div>
 
