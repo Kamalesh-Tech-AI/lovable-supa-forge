@@ -121,6 +121,9 @@ export const BuyProjectsPage = () => {
     if (requirements.budget) {
       setFilters(prev => ({ ...prev, priceRange: requirements.budget }));
     }
+    
+    // Show filtered results
+    fetchProjects();
   };
 
   const categories = [

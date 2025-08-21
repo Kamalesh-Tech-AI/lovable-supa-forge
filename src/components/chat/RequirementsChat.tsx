@@ -166,6 +166,10 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
 
       if (requirements.category || requirements.techStack.length > 0) {
         setExtractedRequirements(requirements);
+        // Call onComplete immediately to show filtered results
+        if (onComplete) {
+          onComplete(requirements);
+        }
         setTimeout(() => {
           setShowResults(true);
         }, 1500);
@@ -187,14 +191,23 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
         <div className="mb-8">
           <Button 
             variant="ghost" 
-            onClick={() => setShowResults(false)}
+            onClick={() => {
+              setShowResults(false);
+              // Call onComplete to trigger the main search
+              if (onComplete) {
+                onComplete(extractedRequirements);
+              }
+            }}
             className="mb-4"
           >
-            ← Back to Chat
+            ← Show All Projects
           </Button>
-          <h1 className="text-3xl font-bold mb-2">Matching Projects</h1>
+          <h1 className="text-3xl font-bold mb-2">Sample Matching Projects</h1>
           <p className="text-muted-foreground">
-            Found {mockProjects.length} projects matching your requirements
+            Found {mockProjects.length} sample projects matching your requirements
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Click "Show All Projects" above to see real projects from our database
           </p>
           
           <div className="flex flex-wrap gap-2 mt-4">

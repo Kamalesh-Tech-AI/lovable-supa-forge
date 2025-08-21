@@ -25,6 +25,7 @@ export const SellProjectsPage = () => {
     zipFile: null
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     const getUser = async () => {
@@ -57,6 +58,40 @@ export const SellProjectsPage = () => {
     { id: 4, title: "Review", icon: CheckCircle, completed: false }
   ];
 
+  const handleFileUpload = async (file: File) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload files.",
+        variant: "destructive"
+      });
+      return null;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('project-files')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      return fileName;
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload file. Please try again.",
+        variant: "destructive"
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (isDraft = false) => {
     if (!user) {
       toast({
@@ -79,6 +114,17 @@ export const SellProjectsPage = () => {
     setIsSubmitting(true);
 
     try {
+      let fileUrl = null;
+      
+      // Upload file if provided
+      if (projectData.zipFile) {
+        fileUrl = await handleFileUpload(projectData.zipFile);
+        if (!fileUrl) {
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('projects')
         .insert({
@@ -89,7 +135,8 @@ export const SellProjectsPage = () => {
           features: projectData.features,
           price_inr: parseInt(projectData.price) || 0,
           status: isDraft ? 'draft' : 'pending',
-          seller_id: user.id
+          seller_id: user.id,
+          file_url: fileUrl
         });
 
       if (error) throw error;
@@ -346,10 +393,31 @@ export const SellProjectsPage = () => {
                   <p className="text-muted-foreground mb-4">
                     Drop your ZIP file here or click to browse
                   </p>
-                  <Button variant="outline">
+                  <input
+                    type="file"
+                    accept=".zip"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setProjectData(prev => ({ ...prev, zipFile: file }));
+                      }
+                    }}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                    disabled={isUploading}
+                  >
                     <Upload className="h-4 w-4 mr-2" />
-                    Choose File
+                    {isUploading ? "Uploading..." : "Choose File"}
                   </Button>
+                  {projectData.zipFile && (
+                    <p className="text-sm text-success mt-2">
+                      Selected: {projectData.zipFile.name}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-2">
                     Maximum file size: 100MB
                   </p>

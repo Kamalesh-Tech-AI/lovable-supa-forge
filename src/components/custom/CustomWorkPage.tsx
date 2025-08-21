@@ -26,6 +26,9 @@ export const CustomWorkPage = () => {
     techStack: ""
   });
 
+  // Add console.log to debug the input issue
+  console.log('Current requestData:', requestData);
+
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
