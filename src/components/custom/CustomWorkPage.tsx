@@ -56,6 +56,34 @@ export const CustomWorkPage = () => {
     }
   ];
 
+  const [myRequests, setMyRequests] = useState([]);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        fetchUserRequests(user.id);
+      }
+    };
+    getUser();
+  }, []);
+
+  const fetchUserRequests = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('custom_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setMyRequests(data || []);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+    }
+  };
+
   const handleSubmitRequest = async () => {
     if (!user) {
       toast({
@@ -78,16 +106,27 @@ export const CustomWorkPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Here you would typically create a custom_requests table
-      // For now, we'll just show a success message
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      const { error } = await supabase
+        .from('custom_requests')
+        .insert({
+          title: requestData.title,
+          description: requestData.description,
+          budget_range: requestData.budget,
+          timeline: requestData.timeline,
+          category: requestData.category,
+          preferred_tech: requestData.techStack,
+          user_id: user.id,
+          status: 'pending'
+        });
+
+      if (error) throw error;
 
       toast({
         title: "Request submitted!",
         description: "Your custom project request has been submitted. We'll match you with suitable developers soon.",
       });
 
-      // Reset form
+      // Reset form and refresh requests
       setRequestData({
         title: "",
         description: "",
@@ -96,6 +135,8 @@ export const CustomWorkPage = () => {
         category: "",
         techStack: ""
       });
+
+      fetchUserRequests(user.id);
 
     } catch (error) {
       toast({
@@ -214,102 +255,75 @@ export const CustomWorkPage = () => {
 
   const MyRequestsList = () => (
     <div className="space-y-6">
-      {mockRequests.map((request) => (
-        <Card key={request.id}>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-xl mb-2">{request.title}</CardTitle>
-                <CardDescription className="text-base">
-                  {request.description}
-                </CardDescription>
-              </div>
-              <Badge className={
-                request.status === "in_progress" 
-                  ? "bg-primary text-primary-foreground" 
-                  : request.status === "completed" 
-                    ? "bg-success text-success-foreground"
-                    : "bg-muted"
-              }>
-                {request.status.replace("_", " ").toUpperCase()}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <span>Budget: ₹{request.budget.toLocaleString()}</span>
-              <span className="flex items-center space-x-1">
-                <Clock className="h-4 w-4" />
-                <span>Updated {request.lastUpdate}</span>
-              </span>
-            </div>
-
-            {request.assignedTo && (
-              <div className="flex items-center space-x-3 p-4 bg-muted/50 rounded-lg">
-                <Avatar>
-                  <AvatarImage src={request.assignedTo.avatar} />
-                  <AvatarFallback>
-                    <User className="h-4 w-4" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="font-medium">{request.assignedTo.name}</p>
-                  <div className="flex items-center space-x-1">
-                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm text-muted-foreground">{request.assignedTo.rating}</span>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Message
-                </Button>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Project Progress</h4>
-                <span className="text-sm text-muted-foreground">{request.progress}% complete</span>
-              </div>
-              <Progress value={request.progress} className="h-2" />
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="font-medium">Milestones</h4>
-              {request.milestones.map((milestone, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`rounded-full p-1 ${
-                      milestone.status === "completed" 
-                        ? "bg-success text-success-foreground" 
-                        : milestone.status === "in_progress"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                    }`}>
-                      <CheckCircle className="h-3 w-3" />
-                    </div>
-                    <span className="font-medium">{milestone.title}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="font-medium">₹{milestone.amount.toLocaleString()}</span>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {milestone.status.replace("_", " ")}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-between pt-4">
-              <Button variant="outline">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                View Messages
-              </Button>
-              <Button>View Details</Button>
-            </div>
+      {myRequests.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-muted-foreground">No custom requests yet.</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Create your first custom project request to get started.
+            </p>
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        myRequests.map((request) => (
+          <Card key={request.id}>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-xl mb-2">{request.title}</CardTitle>
+                  <CardDescription className="text-base">
+                    {request.description}
+                  </CardDescription>
+                </div>
+                <Badge className={
+                  request.status === "in_progress" 
+                    ? "bg-primary text-primary-foreground" 
+                    : request.status === "completed" 
+                      ? "bg-success text-success-foreground"
+                      : "bg-muted"
+                }>
+                  {request.status.replace("_", " ").toUpperCase()}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Budget: {request.budget_range}</span>
+                <span className="flex items-center space-x-1">
+                  <Clock className="h-4 w-4" />
+                  <span>Created {new Date(request.created_at).toLocaleDateString()}</span>
+                </span>
+              </div>
+
+              {request.timeline && (
+                <div className="text-sm">
+                  <span className="font-medium">Timeline:</span> {request.timeline}
+                </div>
+              )}
+
+              {request.category && (
+                <div className="text-sm">
+                  <span className="font-medium">Category:</span> {request.category}
+                </div>
+              )}
+
+              {request.preferred_tech && (
+                <div className="text-sm">
+                  <span className="font-medium">Preferred Tech:</span> {request.preferred_tech}
+                </div>
+              )}
+
+              <div className="flex justify-between pt-4">
+                <Button variant="outline">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  View Messages
+                </Button>
+                <Button>View Details</Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 
@@ -335,7 +349,7 @@ export const CustomWorkPage = () => {
         >
           My Requests
           <Badge variant="secondary" className="ml-2">
-            {mockRequests.length}
+            {myRequests.length}
           </Badge>
         </Button>
       </div>

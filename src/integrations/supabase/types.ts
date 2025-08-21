@@ -14,6 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
+      custom_request_milestones: {
+        Row: {
+          amount: number
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          request_id: string
+          status: string | null
+          title: string
+        }
+        Insert: {
+          amount: number
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          request_id: string
+          status?: string | null
+          title: string
+        }
+        Update: {
+          amount?: number
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          request_id?: string
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_request_milestones_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "custom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_requests: {
+        Row: {
+          assigned_to: string | null
+          budget_range: string
+          category: string | null
+          created_at: string
+          description: string
+          id: string
+          preferred_tech: string | null
+          status: string | null
+          timeline: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          budget_range: string
+          category?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          preferred_tech?: string | null
+          status?: string | null
+          timeline?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          budget_range?: string
+          category?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          preferred_tech?: string | null
+          status?: string | null
+          timeline?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -40,6 +126,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      project_likes: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_likes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       projects: {
         Row: {
@@ -88,6 +203,53 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      purchases: {
+        Row: {
+          amount_paid: number
+          buyer_id: string
+          currency: string | null
+          download_url: string | null
+          id: string
+          payment_method: string | null
+          project_id: string
+          purchased_at: string
+          status: string | null
+          transaction_id: string | null
+        }
+        Insert: {
+          amount_paid: number
+          buyer_id: string
+          currency?: string | null
+          download_url?: string | null
+          id?: string
+          payment_method?: string | null
+          project_id: string
+          purchased_at?: string
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          buyer_id?: string
+          currency?: string | null
+          download_url?: string | null
+          id?: string
+          payment_method?: string | null
+          project_id?: string
+          purchased_at?: string
+          status?: string | null
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
           },
         ]
       }

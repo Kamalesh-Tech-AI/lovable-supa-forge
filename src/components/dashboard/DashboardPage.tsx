@@ -25,6 +25,10 @@ export const DashboardPage = () => {
   const [userProjects, setUserProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [userPurchases, setPurchases] = useState([]);
+  const [userLikes, setUserLikes] = useState([]);
+  const [userRequests, setUserRequests] = useState([]);
+
   useEffect(() => {
     const getUserData = async () => {
       try {
@@ -51,6 +55,39 @@ export const DashboardPage = () => {
             
             setUserProjects(projects || []);
           }
+
+          // Get user's purchases
+          const { data: purchases } = await supabase
+            .from('purchases')
+            .select(`
+              *,
+              projects:project_id(title, category, price_inr)
+            `)
+            .eq('buyer_id', user.id)
+            .order('purchased_at', { ascending: false });
+          
+          setPurchases(purchases || []);
+
+          // Get user's liked projects
+          const { data: likes } = await supabase
+            .from('project_likes')
+            .select(`
+              *,
+              projects:project_id(title, price_inr, category, profiles:seller_id(display_name))
+            `)
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+          
+          setUserLikes(likes || []);
+
+          // Get user's custom requests
+          const { data: requests } = await supabase
+            .from('custom_requests')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+          
+          setUserRequests(requests || []);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -63,66 +100,18 @@ export const DashboardPage = () => {
   }, []);
 
   const buyerStats = {
-    totalPurchases: 12,
-    totalSpent: 85000,
-    activeCustomProjects: 2,
-    likedProjects: 24
+    totalPurchases: userPurchases.length,
+    totalSpent: userPurchases.reduce((total, purchase) => total + (purchase.amount_paid || 0), 0),
+    activeCustomProjects: userRequests.filter(req => req.status === 'in_progress').length,
+    likedProjects: userLikes.length
   };
 
   const sellerStats = {
-    totalProjects: 8,
-    totalEarnings: 125000,
-    totalDownloads: 456,
-    averageRating: 4.8
+    totalProjects: userProjects.length,
+    totalEarnings: userPurchases.reduce((total, purchase) => total + (purchase.amount_paid || 0), 0),
+    totalDownloads: userPurchases.length,
+    averageRating: 4.8 // This would come from reviews in a real app
   };
-
-  const mockPurchases = [
-    {
-      id: 1,
-      title: "E-commerce Dashboard",
-      price: 15000,
-      purchaseDate: "2024-01-15",
-      downloadUrl: "#",
-      status: "completed"
-    },
-    {
-      id: 2,
-      title: "SaaS Landing Page",
-      price: 8000,
-      purchaseDate: "2024-01-10",
-      downloadUrl: "#",
-      status: "completed"
-    }
-  ];
-
-  const mockLikedProjects = [
-    {
-      id: 1,
-      title: "Modern Portfolio Template",
-      price: 12000,
-      seller: "DesignPro",
-      rating: 4.9
-    },
-    {
-      id: 2,
-      title: "Chat Application",
-      price: 18000,
-      seller: "TechStudio",
-      rating: 4.7
-    }
-  ];
-
-  const mockCustomProjects = [
-    {
-      id: 1,
-      title: "Custom E-learning Platform",
-      budget: 50000,
-      progress: 65,
-      status: "in_progress",
-      assignedTo: "Sarah Dev",
-      lastUpdate: "2 hours ago"
-    }
-  ];
 
   const BuyerDashboard = () => (
     <div className="space-y-6">
@@ -185,98 +174,120 @@ export const DashboardPage = () => {
         </TabsList>
 
         <TabsContent value="purchases" className="space-y-4">
-          {mockPurchases.map((purchase) => (
-            <Card key={purchase.id}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{purchase.title}</h3>
-                    <p className="text-muted-foreground">
-                      Purchased on {new Date(purchase.purchaseDate).toLocaleDateString()}
-                    </p>
-                    <p className="text-lg font-bold text-primary mt-2">
-                      ₹{purchase.price.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge className="bg-success text-success-foreground">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      {purchase.status}
-                    </Badge>
-                    <Button>
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
+          {userPurchases.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">No purchases yet.</p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            userPurchases.map((purchase) => (
+              <Card key={purchase.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">{purchase.projects?.title}</h3>
+                      <p className="text-muted-foreground">
+                        Purchased on {new Date(purchase.purchased_at).toLocaleDateString()}
+                      </p>
+                      <p className="text-lg font-bold text-primary mt-2">
+                        ₹{purchase.amount_paid?.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge className="bg-success text-success-foreground">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        {purchase.status}
+                      </Badge>
+                      <Button>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="liked" className="space-y-4">
-          {mockLikedProjects.map((project) => (
-            <Card key={project.id}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{project.title}</h3>
-                    <p className="text-muted-foreground">by {project.seller}</p>
-                    <div className="flex items-center space-x-1 mt-2">
-                      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm">{project.rating}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-primary mb-2">
-                      ₹{project.price.toLocaleString()}
-                    </p>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview
-                      </Button>
-                      <Button size="sm">Buy Now</Button>
-                    </div>
-                  </div>
-                </div>
+          {userLikes.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">No liked projects yet.</p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            userLikes.map((like) => (
+              <Card key={like.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">{like.projects?.title}</h3>
+                      <p className="text-muted-foreground">by {like.projects?.profiles?.display_name}</p>
+                      <div className="flex items-center space-x-1 mt-2">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm">4.8</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-primary mb-2">
+                        ₹{like.projects?.price_inr?.toLocaleString()}
+                      </p>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          Preview
+                        </Button>
+                        <Button size="sm">Buy Now</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
 
         <TabsContent value="custom" className="space-y-4">
-          {mockCustomProjects.map((project) => (
-            <Card key={project.id}>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-lg">{project.title}</h3>
-                      <p className="text-muted-foreground">Assigned to {project.assignedTo}</p>
-                      <p className="text-sm text-muted-foreground">Last update: {project.lastUpdate}</p>
-                    </div>
-                    <Badge className="bg-primary text-primary-foreground">
-                      {project.status.replace("_", " ").toUpperCase()}
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Progress</span>
-                      <span className="text-sm text-muted-foreground">{project.progress}%</span>
-                    </div>
-                    <Progress value={project.progress} className="h-2" />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold">₹{project.budget.toLocaleString()}</span>
-                    <Button>View Details</Button>
-                  </div>
-                </div>
+          {userRequests.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <p className="text-muted-foreground">No custom requests yet.</p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            userRequests.map((request) => (
+              <Card key={request.id}>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg">{request.title}</h3>
+                        <p className="text-muted-foreground">Budget: {request.budget_range}</p>
+                        <p className="text-sm text-muted-foreground">Created: {new Date(request.created_at).toLocaleDateString()}</p>
+                      </div>
+                      <Badge className={
+                        request.status === "in_progress" 
+                          ? "bg-primary text-primary-foreground" 
+                          : request.status === "completed" 
+                            ? "bg-success text-success-foreground"
+                            : "bg-muted"
+                      }>
+                        {request.status.replace("_", " ").toUpperCase()}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Timeline: {request.timeline || 'Not specified'}</span>
+                      <Button>View Details</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
     </div>

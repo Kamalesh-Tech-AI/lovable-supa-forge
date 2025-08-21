@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star, Download, Heart, Eye, User } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectCardProps {
   project: {
@@ -27,6 +28,37 @@ interface ProjectCardProps {
 export const ProjectCard = ({ project, onBuyNow }: ProjectCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
 
+  const handleLikeToggle = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return; // User not authenticated
+      }
+
+      if (isLiked) {
+        // Unlike the project
+        await supabase
+          .from('project_likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('project_id', project.id);
+      } else {
+        // Like the project
+        await supabase
+          .from('project_likes')
+          .insert({
+            user_id: user.id,
+            project_id: project.id
+          });
+      }
+      
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
+  };
+
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 h-full flex flex-col">
       <CardHeader className="pb-3">
@@ -43,7 +75,7 @@ export const ProjectCard = ({ project, onBuyNow }: ProjectCardProps) => {
             variant="ghost"
             size="sm"
             className="ml-2"
-            onClick={() => setIsLiked(!isLiked)}
+            onClick={handleLikeToggle}
           >
             <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
           </Button>
