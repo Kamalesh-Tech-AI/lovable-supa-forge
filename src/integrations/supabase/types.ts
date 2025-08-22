@@ -158,12 +158,16 @@ export type Database = {
       }
       projects: {
         Row: {
+          admin_notes: string | null
           category: string | null
           created_at: string
           description: string | null
+          download_url: string | null
           features: string[] | null
           id: string
+          images: string[] | null
           price_inr: number
+          screenshot_url: string | null
           seller_id: string
           status: string | null
           tech_stack: Json | null
@@ -171,12 +175,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_notes?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
+          download_url?: string | null
           features?: string[] | null
           id?: string
+          images?: string[] | null
           price_inr: number
+          screenshot_url?: string | null
           seller_id: string
           status?: string | null
           tech_stack?: Json | null
@@ -184,12 +192,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_notes?: string | null
           category?: string | null
           created_at?: string
           description?: string | null
+          download_url?: string | null
           features?: string[] | null
           id?: string
+          images?: string[] | null
           price_inr?: number
+          screenshot_url?: string | null
           seller_id?: string
           status?: string | null
           tech_stack?: Json | null
@@ -253,12 +265,66 @@ export type Database = {
           },
         ]
       }
+      sell_projects: {
+        Row: {
+          admin_notes: string | null
+          category: string | null
+          created_at: string
+          demo_command: string | null
+          description: string | null
+          features: string[] | null
+          file_url: string | null
+          id: string
+          price_inr: number
+          seller_id: string
+          status: string | null
+          tech_stack: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category?: string | null
+          created_at?: string
+          demo_command?: string | null
+          description?: string | null
+          features?: string[] | null
+          file_url?: string | null
+          id?: string
+          price_inr: number
+          seller_id: string
+          status?: string | null
+          tech_stack?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string | null
+          created_at?: string
+          demo_command?: string | null
+          description?: string | null
+          features?: string[] | null
+          file_url?: string | null
+          id?: string
+          price_inr?: number
+          seller_id?: string
+          status?: string | null
+          tech_stack?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

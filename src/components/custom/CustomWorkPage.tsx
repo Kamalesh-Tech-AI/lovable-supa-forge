@@ -26,9 +26,9 @@ export const CustomWorkPage = () => {
     techStack: ""
   });
 
-  const handleInputChange = useCallback((field: string, value: string) => {
+  const handleInputChange = (field: string, value: string) => {
     setRequestData(prev => ({ ...prev, [field]: value }));
-  }, []);
+  };
 
   // Add console.log to debug the input issue
   console.log('Current requestData:', requestData);

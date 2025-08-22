@@ -29,9 +29,9 @@ export const SellProjectsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleInputChange = useCallback((field: string, value: any) => {
+  const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
-  }, []);
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -136,7 +136,7 @@ export const SellProjectsPage = () => {
       }
 
       const { error } = await supabase
-        .from('projects')
+        .from('sell_projects')
         .insert({
           title: projectData.title,
           description: projectData.description,
@@ -146,7 +146,8 @@ export const SellProjectsPage = () => {
           price_inr: parseInt(projectData.price) || 0,
           status: isDraft ? 'draft' : 'pending',
           seller_id: user.id,
-          file_url: fileUrl
+          file_url: fileUrl,
+          demo_command: projectData.demoCommand
         });
 
       if (error) throw error;
