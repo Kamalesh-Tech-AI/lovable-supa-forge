@@ -1,86 +1,116 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Upload, Wrench, LayoutDashboard, User, LogOut } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ShoppingCart, User, Settings, LogOut, Home, ShoppingBag, Wrench, BarChart3 } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 
 interface NavigationProps {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  user?: any;
+  user: SupabaseUser;
+  onSignOut: () => void;
 }
 
-export const Navigation = ({ activeTab, onTabChange, user }: NavigationProps) => {
-  const { toast } = useToast();
+export const Navigation = ({ user, onSignOut }: NavigationProps) => {
+  const location = useLocation();
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Signed out",
-      description: "You've been signed out successfully.",
-    });
-  };
-
-  const navItems = [
-    { id: "buy", label: "Buy Projects", icon: ShoppingCart },
-    { id: "sell", label: "Sell Projects", icon: Upload },
-    { id: "custom", label: "Custom Work", icon: Wrench },
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  const navigationItems = [
+    { href: "/", label: "Home", icon: Home },
+    { href: "/buy", label: "Buy Projects", icon: ShoppingCart },
+    { href: "/sell", label: "Sell Projects", icon: ShoppingBag },
+    { href: "/custom", label: "Custom Work", icon: Wrench },
+    { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   ];
 
-  return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center space-x-8">
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">PM</span>
-            </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              ProjectMarket
-            </span>
-            <Badge variant="secondary" className="ml-2">Beta</Badge>
-          </div>
-          
-          <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Button
-                  key={item.id}
-                  variant={activeTab === item.id ? "default" : "ghost"}
-                  className={`flex items-center space-x-2 ${
-                    activeTab === item.id 
-                      ? "bg-primary text-primary-foreground shadow-md" 
-                      : "hover:bg-accent"
-                  }`}
-                  onClick={() => onTabChange(item.id)}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Button>
-              );
-            })}
-          </div>
-        </div>
+  const getUserDisplayName = () => {
+    return user.user_metadata?.display_name || user.email?.split('@')[0] || 'User';
+  };
 
-        <div className="flex items-center space-x-4">
-          {user ? (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-muted-foreground">
-                {user.email}
-              </span>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
+  const getUserInitials = () => {
+    const displayName = getUserDisplayName();
+    return displayName.charAt(0).toUpperCase();
+  };
+
+  return (
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center space-x-8">
+            <Link to="/" className="text-xl font-bold">
+              ProjectHub
+            </Link>
+            
+            <div className="hidden md:flex items-center space-x-6">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary ${
+                      isActive 
+                        ? "text-primary border-b-2 border-primary pb-1" 
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
-          ) : (
-            <Button variant="outline" size="sm" onClick={() => onTabChange('auth')}>
-              <User className="h-4 w-4 mr-2" />
-              Sign In
-            </Button>
-          )}
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="" alt={getUserDisplayName()} />
+                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <div className="flex items-center justify-start gap-2 p-2">
+                  <div className="flex flex-col space-y-1 leading-none">
+                    <p className="font-medium">{getUserDisplayName()}</p>
+                    <p className="w-[200px] truncate text-sm text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard" className="cursor-pointer">
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-600 focus:text-red-600"
+                  onClick={onSignOut}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </nav>
