@@ -73,12 +73,102 @@ export const BuyProjectsPage = () => {
       if (error) throw error;
 
       // Transform data to include seller info
-      const transformedProjects = data.map(project => ({
+      let transformedProjects = data.map(project => ({
         ...project,
         seller: {
-          display_name: project.profiles?.display_name || 'Unknown Seller'
+          display_name: project.profiles?.display_name || 'Demo Developer'
         }
       }));
+
+      // Add sample projects if database is empty
+      if (transformedProjects.length === 0) {
+        transformedProjects = [
+          {
+            id: 'sample-1',
+            title: 'E-commerce Dashboard',
+            description: 'Complete e-commerce admin dashboard with inventory management, order tracking, and analytics.',
+            price_inr: 45000,
+            category: 'dashboard',
+            tech_stack: ['React', 'Node.js', 'PostgreSQL', 'Tailwind CSS'],
+            features: ['Real-time analytics', 'Inventory management', 'Order tracking', 'User management', 'Payment integration'],
+            status: 'approved',
+            seller: { display_name: 'Demo Developer' },
+            screenshot_url: '/placeholder.svg',
+            images: ['dashboard-1.jpg', 'dashboard-2.jpg', 'dashboard-3.jpg'],
+            rating: 4.8,
+            downloads: 142,
+            admin_notes: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            download_url: null,
+            seller_id: '00000000-0000-0000-0000-000000000000',
+            profiles: null
+          },
+          {
+            id: 'sample-2',
+            title: 'Portfolio Website Template',
+            description: 'Modern responsive portfolio website template with dark/light mode, animations, and contact form.',
+            price_inr: 15000,
+            category: 'portfolio',
+            tech_stack: ['React', 'TypeScript', 'Framer Motion', 'Tailwind CSS'],
+            features: ['Responsive design', 'Dark mode', 'Smooth animations', 'Contact form', 'SEO optimized'],
+            status: 'approved',
+            seller: { display_name: 'Demo Developer' },
+            screenshot_url: '/placeholder.svg',
+            images: ['portfolio-1.jpg', 'portfolio-2.jpg'],
+            rating: 4.9,
+            downloads: 89,
+            admin_notes: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            download_url: null,
+            seller_id: '00000000-0000-0000-0000-000000000000',
+            profiles: null
+          },
+          {
+            id: 'sample-3',
+            title: 'Task Management App',
+            description: 'Full-featured task management application with team collaboration, deadlines, and progress tracking.',
+            price_inr: 35000,
+            category: 'saas app',
+            tech_stack: ['Vue.js', 'Express.js', 'MongoDB', 'Socket.io'],
+            features: ['Team collaboration', 'Deadline tracking', 'Progress visualization', 'Real-time updates', 'File attachments'],
+            status: 'approved',
+            seller: { display_name: 'Demo Developer' },
+            screenshot_url: '/placeholder.svg',
+            images: ['task-app-1.jpg', 'task-app-2.jpg', 'task-app-3.jpg'],
+            rating: 4.7,
+            downloads: 203,
+            admin_notes: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            download_url: null,
+            seller_id: '00000000-0000-0000-0000-000000000000',
+            profiles: null
+          },
+          {
+            id: 'sample-4',
+            title: 'Restaurant Landing Page',
+            description: 'Beautiful restaurant landing page with menu display, reservation system, and location integration.',
+            price_inr: 20000,
+            category: 'landing page',
+            tech_stack: ['HTML5', 'CSS3', 'JavaScript', 'PHP'],
+            features: ['Menu showcase', 'Online reservations', 'Location maps', 'Gallery', 'Contact integration'],
+            status: 'approved',
+            seller: { display_name: 'Demo Developer' },
+            screenshot_url: '/placeholder.svg',
+            images: ['restaurant-1.jpg', 'restaurant-2.jpg'],
+            rating: 4.6,
+            downloads: 67,
+            admin_notes: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            download_url: null,
+            seller_id: '00000000-0000-0000-0000-000000000000',
+            profiles: null
+          }
+        ] as any;
+      }
 
       setProjects(transformedProjects);
     } catch (error) {
