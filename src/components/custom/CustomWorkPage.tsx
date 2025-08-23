@@ -30,36 +30,6 @@ export const CustomWorkPage = () => {
     setRequestData(prev => ({ ...prev, [field]: value }));
   };
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    getUser();
-  }, []);
-
-  const mockRequests = [
-    {
-      id: 1,
-      title: "Custom E-learning Platform",
-      description: "Need a comprehensive e-learning platform with video streaming, quizzes, and progress tracking.",
-      budget: 50000,
-      status: "in_progress",
-      assignedTo: {
-        name: "Sarah Dev",
-        avatar: "/placeholder.svg",
-        rating: 4.9
-      },
-      progress: 65,
-      lastUpdate: "2 hours ago",
-      milestones: [
-        { title: "Backend API", status: "completed", amount: 15000 },
-        { title: "Frontend UI", status: "in_progress", amount: 20000 },
-        { title: "Video Integration", status: "pending", amount: 15000 }
-      ]
-    }
-  ];
-
   const [myRequests, setMyRequests] = useState([]);
 
   useEffect(() => {
