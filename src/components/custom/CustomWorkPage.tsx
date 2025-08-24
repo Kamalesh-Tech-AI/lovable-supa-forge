@@ -26,24 +26,13 @@ export const CustomWorkPage = () => {
     techStack: ""
   });
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = useCallback((field: string, value: string) => {
     setRequestData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const [myRequests, setMyRequests] = useState([]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        fetchUserRequests(user.id);
-      }
-    };
-    getUser();
-  }, []);
-
-  const fetchUserRequests = async (userId: string) => {
+  const fetchUserRequests = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('custom_requests')
@@ -56,7 +45,18 @@ export const CustomWorkPage = () => {
     } catch (error) {
       console.error('Error fetching requests:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        fetchUserRequests(user.id);
+      }
+    };
+    getUser();
+  }, [fetchUserRequests]);
 
   const handleSubmitRequest = async () => {
     if (!user) {
