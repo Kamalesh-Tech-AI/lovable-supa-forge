@@ -13,6 +13,8 @@ import { BuyProjectsPage } from "./components/buy/BuyProjectsPage";
 import { SellProjectsPage } from "./components/sell/SellProjectsPage";
 import { CustomWorkPage } from "./components/custom/CustomWorkPage";
 import { DashboardPage } from "./components/dashboard/DashboardPage";
+import { SettingsPage } from "./components/settings/SettingsPage";
+import { NotificationsPage } from "./components/notifications/NotificationsPage";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +89,8 @@ function App() {
                 <Route path="/sell" element={<SellProjectsPage />} />
                 <Route path="/custom" element={<CustomWorkPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/auth" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

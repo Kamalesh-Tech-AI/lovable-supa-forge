@@ -100,30 +100,247 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
+      developer_auth: {
         Row: {
           created_at: string
-          display_name: string | null
+          display_name: string
+          email: string
           id: string
-          role: string | null
+          invitation_code: string
+          last_login: string | null
+          star_rating: number
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          invitation_code: string
+          last_login?: string | null
+          star_rating: number
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          invitation_code?: string
+          last_login?: string | null
+          star_rating?: number
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      developer_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invitation_code: string
+          invited_at: string
+          invited_by: string
+          star_rating: number
+          status: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invitation_code: string
+          invited_at?: string
+          invited_by: string
+          star_rating: number
+          status?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invitation_code?: string
+          invited_at?: string
+          invited_by?: string
+          star_rating?: number
+          status?: string | null
+        }
+        Relationships: []
+      }
+      developer_projects: {
+        Row: {
+          admin_notes: string | null
+          assigned_at: string
+          assigned_by: string
+          completed_at: string | null
+          created_at: string
+          custom_request_id: string
+          deadline: string | null
+          developer_id: string
+          id: string
+          project_file_url: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          assigned_at?: string
+          assigned_by: string
+          completed_at?: string | null
+          created_at?: string
+          custom_request_id: string
+          deadline?: string | null
+          developer_id: string
+          id?: string
+          project_file_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          assigned_at?: string
+          assigned_by?: string
+          completed_at?: string | null
+          created_at?: string
+          custom_request_id?: string
+          deadline?: string | null
+          developer_id?: string
+          id?: string
+          project_file_url?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "developer_projects_custom_request_id_fkey"
+            columns: ["custom_request_id"]
+            isOneToOne: false
+            referencedRelation: "custom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string
+          daily_digest: boolean | null
+          email_notifications: boolean | null
+          id: string
+          milestone_updates: boolean | null
+          project_status_updates: boolean | null
+          push_notifications: boolean | null
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          display_name?: string | null
+          daily_digest?: boolean | null
+          email_notifications?: boolean | null
           id?: string
-          role?: string | null
+          milestone_updates?: boolean | null
+          project_status_updates?: boolean | null
+          push_notifications?: boolean | null
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          display_name?: string | null
+          daily_digest?: boolean | null
+          email_notifications?: boolean | null
           id?: string
-          role?: string | null
+          milestone_updates?: boolean | null
+          project_status_updates?: boolean | null
+          push_notifications?: boolean | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read: boolean | null
+          related_request_id: string | null
+          title: string
+          type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read?: boolean | null
+          related_request_id?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          related_request_id?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_request_id_fkey"
+            columns: ["related_request_id"]
+            isOneToOne: false
+            referencedRelation: "custom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          invitation_code: string | null
+          role: string | null
+          star_rating: number | null
+          updated_at: string
+          user_id: string
+          user_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          invitation_code?: string | null
+          role?: string | null
+          star_rating?: number | null
+          updated_at?: string
+          user_id: string
+          user_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          invitation_code?: string | null
+          role?: string | null
+          star_rating?: number | null
+          updated_at?: string
+          user_id?: string
+          user_type?: string | null
         }
         Relationships: []
       }
@@ -324,6 +541,31 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      is_authenticated_developer: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_invited_developer: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      link_developer_auth: {
+        Args: { p_email: string; p_invitation_code: string; p_user_id: string }
+        Returns: Json
+      }
+      register_invited_developer: {
+        Args: {
+          p_display_name: string
+          p_email: string
+          p_invitation_code: string
+          p_password: string
+        }
+        Returns: Json
+      }
+      verify_developer_auth: {
+        Args: { p_email: string; p_invitation_code: string }
+        Returns: Json
       }
     }
     Enums: {

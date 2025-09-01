@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShoppingCart, User, Settings, LogOut, Home, ShoppingBag, Wrench, BarChart3 } from "lucide-react";
+import { ShoppingCart, User, Settings, LogOut, Home, ShoppingBag, Wrench, BarChart3, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
@@ -92,6 +92,12 @@ export const Navigation = ({ user, onSignOut }: NavigationProps) => {
                   <Link to="/dashboard" className="cursor-pointer">
                     <BarChart3 className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/notifications" className="cursor-pointer">
+                    <Bell className="mr-2 h-4 w-4" />
+                    <span>Notifications</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
