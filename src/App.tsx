@@ -16,6 +16,7 @@ import { CustomWorkPage } from "./components/custom/CustomWorkPage";
 import { DashboardPage } from "./components/dashboard/DashboardPage";
 import { SettingsPage } from "./components/settings/SettingsPage";
 import { NotificationsPage } from "./components/notifications/NotificationsPage";
+import { UserTypeModal } from "./components/auth/UserTypeModal";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,8 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showUserTypeModal, setShowUserTypeModal] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -31,6 +34,13 @@ function App() {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Check if this is a new user who needs to select user type
+        if (session?.user && event === 'SIGNED_IN') {
+          setTimeout(() => {
+            checkUserProfile(session.user.id);
+          }, 0);
+        }
       }
     );
 
@@ -39,10 +49,56 @@ function App() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      if (session?.user) {
+        setTimeout(() => {
+          checkUserProfile(session.user.id);
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkUserProfile = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+
+      setUserProfile(profile);
+      
+      // Show user type modal only if user_type is not set (new users)
+      if (!profile?.user_type || profile.user_type === 'buyer') {
+        // Check if this was recently created (within last 5 minutes) to ensure it's a new signup
+        const profileCreated = new Date(profile.created_at);
+        const now = new Date();
+        const timeDiff = now.getTime() - profileCreated.getTime();
+        const minutesDiff = timeDiff / (1000 * 60);
+        
+        if (minutesDiff <= 5) {
+          setShowUserTypeModal(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user profile:', error);
+    }
+  };
+
+  const handleUserTypeModalClose = () => {
+    setShowUserTypeModal(false);
+    // Refresh profile after user type selection
+    if (user) {
+      checkUserProfile(user.id);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -95,6 +151,15 @@ function App() {
                 <Route path="/auth" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              
+              {/* User Type Selection Modal */}
+              {user && showUserTypeModal && (
+                <UserTypeModal
+                  isOpen={showUserTypeModal}
+                  onClose={handleUserTypeModalClose}
+                  userId={user.id}
+                />
+              )}
             </div>
           ) : (
             <Routes>
