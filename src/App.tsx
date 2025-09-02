@@ -77,15 +77,15 @@ function App() {
       
       // Show user type modal for new users who haven't set user_type yet
       // This includes both email signups and Google signups that haven't chosen their type
-      if (!profile?.user_type || profile.user_type === 'buyer') {
+      if (!profile?.user_type) {
         // Check if this was recently created (within last 10 minutes) to ensure it's a new signup
         const profileCreated = new Date(profile.created_at);
         const now = new Date();
         const timeDiff = now.getTime() - profileCreated.getTime();
         const minutesDiff = timeDiff / (1000 * 60);
         
-        // Show modal for new users or if user_type was never properly set
-        if (minutesDiff <= 10 || profile.user_type === 'buyer') {
+        // Show modal for new users who haven't properly set their user_type
+        if (minutesDiff <= 10) {
           setShowUserTypeModal(true);
         }
       }
