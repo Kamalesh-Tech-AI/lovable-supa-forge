@@ -1,10 +1,11 @@
 import { RequirementsChat } from "@/components/chat/RequirementsChat";
 import { ProjectCard } from "./ProjectCard";
+import { SearchHistory } from "@/components/search/SearchHistory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { Search, Filter, SlidersHorizontal, History } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ export const BuyProjectsPage = () => {
   const [showChat, setShowChat] = useState(true);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
     category: "all",
@@ -27,7 +29,25 @@ export const BuyProjectsPage = () => {
     }
   }, [showChat, filters]);
 
-  const fetchProjects = async () => {
+  const saveSearchToHistory = async (searchQuery: string, searchFilters: any, resultsCount: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !searchQuery.trim()) return;
+
+      await supabase
+        .from('search_history')
+        .insert({
+          user_id: user.id,
+          search_query: searchQuery,
+          search_filters: searchFilters,
+          results_count: resultsCount
+        });
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
+  };
+
+  const fetchProjects = async (saveToHistory = true) => {
     setLoading(true);
     try {
       let query = supabase
@@ -171,6 +191,11 @@ export const BuyProjectsPage = () => {
       }
 
       setProjects(transformedProjects);
+
+      // Save search to history if there's a search query and we should save
+      if (saveToHistory && filters.search.trim()) {
+        await saveSearchToHistory(filters.search, filters, transformedProjects.length);
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast({
@@ -214,6 +239,17 @@ export const BuyProjectsPage = () => {
     
     // Show filtered results
     fetchProjects();
+  };
+
+  const handleSelectHistory = (searchQuery: string, searchFilters: any) => {
+    setFilters({
+      search: searchQuery,
+      category: searchFilters.category || "all",
+      priceRange: searchFilters.priceRange || "all",
+      sortBy: searchFilters.sortBy || "latest"
+    });
+    // Don't save to history when loading from history
+    fetchProjects(false);
   };
 
   const categories = [
@@ -274,8 +310,16 @@ export const BuyProjectsPage = () => {
               placeholder="Search projects..."
               value={filters.search}
               onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              className="pl-10"
+              className="pl-10 pr-10"
             />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowHistory(true)}
+              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+            >
+              <History className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
@@ -326,6 +370,16 @@ export const BuyProjectsPage = () => {
           </Select>
         </div>
       </div>
+
+      {/* Search History Modal */}
+      {showHistory && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <SearchHistory
+            onSelectHistory={handleSelectHistory}
+            onClose={() => setShowHistory(false)}
+          />
+        </div>
+      )}
 
       {/* Projects Grid */}
       {loading ? (
