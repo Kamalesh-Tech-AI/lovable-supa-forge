@@ -1,10 +1,11 @@
 import { RequirementsChat } from "@/components/chat/RequirementsChat";
 import { ProjectCard } from "./ProjectCard";
-import { SearchHistory } from "@/components/search/SearchHistory";
+import { SearchHistory } from "./SearchHistory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, Filter, SlidersHorizontal, History } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,7 @@ export const BuyProjectsPage = () => {
   const [showChat, setShowChat] = useState(true);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [filters, setFilters] = useState({
     search: "",
@@ -315,7 +317,7 @@ export const BuyProjectsPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setShowHistory(true)}
+              onClick={() => setShowSearchHistory(true)}
               className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
             >
               <History className="h-4 w-4" />
@@ -372,11 +374,11 @@ export const BuyProjectsPage = () => {
       </div>
 
       {/* Search History Modal */}
-      {showHistory && (
+      {showSearchHistory && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <SearchHistory
             onSelectHistory={handleSelectHistory}
-            onClose={() => setShowHistory(false)}
+            onClose={() => setShowSearchHistory(false)}
           />
         </div>
       )}
