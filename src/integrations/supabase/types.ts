@@ -21,7 +21,9 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          progress_notes: string | null
           request_id: string
+          screenshot_url: string | null
           status: string | null
           title: string
         }
@@ -31,7 +33,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          progress_notes?: string | null
           request_id: string
+          screenshot_url?: string | null
           status?: string | null
           title: string
         }
@@ -41,7 +45,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          progress_notes?: string | null
           request_id?: string
+          screenshot_url?: string | null
           status?: string | null
           title?: string
         }
@@ -172,6 +178,39 @@ export type Database = {
           invited_by?: string
           star_rating?: number
           status?: string | null
+        }
+        Relationships: []
+      }
+      developer_messages: {
+        Row: {
+          attachments: string[] | null
+          created_at: string
+          custom_request_id: string
+          id: string
+          message: string
+          sender_id: string
+          sender_type: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          created_at?: string
+          custom_request_id: string
+          id?: string
+          message: string
+          sender_id: string
+          sender_type: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: string[] | null
+          created_at?: string
+          custom_request_id?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -373,6 +412,36 @@ export type Database = {
           },
         ]
       }
+      project_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          rating: number
+          review: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          rating: number
+          review?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          rating?: number
+          review?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           admin_notes: string | null
@@ -482,6 +551,33 @@ export type Database = {
           },
         ]
       }
+      search_history: {
+        Row: {
+          created_at: string
+          id: string
+          results_count: number | null
+          search_filters: Json | null
+          search_query: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          results_count?: number | null
+          search_filters?: Json | null
+          search_query: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          results_count?: number | null
+          search_filters?: Json | null
+          search_query?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sell_projects: {
         Row: {
           admin_notes: string | null
@@ -538,6 +634,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_developer_avg_rating: {
+        Args: { developer_user_id: string }
+        Returns: number
+      }
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
