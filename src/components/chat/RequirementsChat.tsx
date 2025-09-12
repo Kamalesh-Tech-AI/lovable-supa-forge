@@ -49,10 +49,6 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
   const [extractedRequirements, setExtractedRequirements] = useState<any>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-  const [webhookUrls, setWebhookUrls] = useState({
-    send: '',
-    receive: ''
-  });
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -103,14 +99,6 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     scrollToBottom();
   }, [messages]);
 
-  useEffect(() => {
-    // Load webhook URLs from localStorage
-    const savedUrls = localStorage.getItem('n8n_webhook_urls');
-    if (savedUrls) {
-      setWebhookUrls(JSON.parse(savedUrls));
-    }
-  }, []);
-
   // Save chat history to localStorage
   const saveChatHistory = (message: any) => {
     try {
@@ -130,37 +118,28 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     }
   };
 
-  // Send message to n8n webhook
+  // Send message to n8n via Supabase edge function
   const sendToN8nWebhook = async (userMessage: string) => {
-    if (!webhookUrls.send) {
-      console.warn('No n8n send webhook URL configured');
-      return null;
-    }
-
     try {
-      const response = await fetch(webhookUrls.send, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('n8n-chat', {
+        body: {
           message: userMessage,
-          session_id: sessionId,
-          timestamp: new Date().toISOString()
-        }),
+          session_id: sessionId
+        }
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        console.error('Edge function error:', error);
+        return null;
       }
 
-      const data = await response.json();
-      return data.response || data.message || null;
+      console.log('Response from n8n via edge function:', data);
+      return data.response || null;
     } catch (error) {
-      console.error('Error sending to n8n webhook:', error);
+      console.error('Error calling n8n edge function:', error);
       toast({
-        title: "Webhook Error",
-        description: "Failed to send message to n8n webhook. Using fallback response.",
+        title: "Connection Error",
+        description: "Failed to connect to AI service. Using fallback response.",
         variant: "destructive"
       });
       return null;
@@ -290,12 +269,10 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     }
   };
 
-  const saveWebhookUrls = () => {
-    localStorage.setItem('n8n_webhook_urls', JSON.stringify(webhookUrls));
-    setShowSettings(false);
+  const openSecretModal = () => {
     toast({
-      title: "Settings Saved",
-      description: "n8n webhook URLs have been saved successfully."
+      title: "Webhook Configuration",
+      description: "Your n8n webhook URL is securely stored in Supabase secrets. The chatbot will automatically use it when available.",
     });
   };
 
@@ -499,7 +476,7 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
           <Card className="w-full max-w-md">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">n8n Webhook Settings</h3>
+                <h3 className="text-lg font-semibold">n8n Integration Status</h3>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -510,38 +487,38 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
               </div>
               
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="send-webhook">Send Webhook URL</Label>
-                  <Input
-                    id="send-webhook"
-                    placeholder="https://your-n8n-instance.com/webhook/send"
-                    value={webhookUrls.send}
-                    onChange={(e) => setWebhookUrls(prev => ({ ...prev, send: e.target.value }))}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    URL to send user messages to n8n
+                <div className="p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="font-medium">Webhook Status</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Your n8n webhook URL is securely stored in Supabase secrets. The chatbot will automatically attempt to use your n8n workflow when you send messages.
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="receive-webhook">Receive Webhook URL</Label>
-                  <Input
-                    id="receive-webhook"
-                    placeholder="https://your-n8n-instance.com/webhook/receive"
-                    value={webhookUrls.receive}
-                    onChange={(e) => setWebhookUrls(prev => ({ ...prev, receive: e.target.value }))}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    URL to receive responses from n8n (optional)
-                  </p>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">How it works:</h4>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <div>1. You send a message in the chat</div>
+                    <div>2. Message is sent to your n8n webhook</div>
+                    <div>3. n8n processes with AI and returns response</div>
+                    <div>4. If n8n fails, fallback responses are used</div>
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-2 pt-4">
-                  <Button onClick={saveWebhookUrls} className="flex-1">
-                    Save Settings
+                  <Button onClick={() => setShowSettings(false)} className="flex-1">
+                    Got it
                   </Button>
-                  <Button variant="outline" onClick={() => setShowSettings(false)}>
-                    Cancel
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowSettings(false);
+                      setShowGuide(true);
+                    }}
+                  >
+                    Setup Guide
                   </Button>
                 </div>
               </div>
