@@ -3,7 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Send, Bot, User, Search, Star, Download, Heart } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Settings, Send, Bot, User, Search, Star, Download, Heart, HelpCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { N8nSetupGuide } from "./N8nSetupGuide";
 
 interface Message {
   id: string;
@@ -30,6 +35,7 @@ interface RequirementsChatProps {
 }
 
 export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -41,6 +47,13 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
   const [input, setInput] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [extractedRequirements, setExtractedRequirements] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [webhookUrls, setWebhookUrls] = useState({
+    send: '',
+    receive: ''
+  });
+  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const mockProjects: ProjectMatch[] = [
@@ -89,6 +102,70 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    // Load webhook URLs from localStorage
+    const savedUrls = localStorage.getItem('n8n_webhook_urls');
+    if (savedUrls) {
+      setWebhookUrls(JSON.parse(savedUrls));
+    }
+  }, []);
+
+  // Save chat history to localStorage
+  const saveChatHistory = (message: any) => {
+    try {
+      const history = JSON.parse(localStorage.getItem('chat_history') || '[]');
+      history.push({
+        session_id: sessionId,
+        message: message,
+        timestamp: new Date().toISOString()
+      });
+      // Keep only last 100 messages
+      if (history.length > 100) {
+        history.splice(0, history.length - 100);
+      }
+      localStorage.setItem('chat_history', JSON.stringify(history));
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+    }
+  };
+
+  // Send message to n8n webhook
+  const sendToN8nWebhook = async (userMessage: string) => {
+    if (!webhookUrls.send) {
+      console.warn('No n8n send webhook URL configured');
+      return null;
+    }
+
+    try {
+      const response = await fetch(webhookUrls.send, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          session_id: sessionId,
+          timestamp: new Date().toISOString()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.response || data.message || null;
+    } catch (error) {
+      console.error('Error sending to n8n webhook:', error);
+      toast({
+        title: "Webhook Error",
+        description: "Failed to send message to n8n webhook. Using fallback response.",
+        variant: "destructive"
+      });
+      return null;
+    }
+  };
 
   const extractRequirements = (userMessage: string) => {
     // Simple keyword extraction - in production, this would use NLP
@@ -139,7 +216,7 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     return "I'd love to help you find the right project! Could you tell me more about what you're looking for? For example, what type of project (e-commerce, portfolio, dashboard), what technologies you prefer (React, Next.js, etc.), and your budget range?";
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!input.trim()) return;
 
     const userMessage: Message = {
@@ -150,11 +227,31 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Save user message to history
+    saveChatHistory({
+      type: 'user',
+      content: input,
+      timestamp: new Date().toISOString()
+    });
 
-    const requirements = extractRequirements(input);
-    const botResponse = getBotResponse(input, requirements);
+    // Send to n8n webhook
+    const webhookResponse = await sendToN8nWebhook(input);
+    
+    let botResponse: string;
+    let requirements: any;
 
-    setTimeout(() => {
+    if (webhookResponse) {
+      // Use n8n response
+      botResponse = webhookResponse;
+      requirements = extractRequirements(input);
+    } else {
+      // Fallback to local processing
+      requirements = extractRequirements(input);
+      botResponse = getBotResponse(input, requirements);
+    }
+
+    setTimeout(async () => {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'bot',
@@ -163,6 +260,13 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
       };
 
       setMessages(prev => [...prev, botMessage]);
+
+      // Save bot message to history
+      saveChatHistory({
+        type: 'bot',
+        content: botResponse,
+        timestamp: new Date().toISOString()
+      });
 
       if (requirements.category || requirements.techStack.length > 0) {
         setExtractedRequirements(requirements);
@@ -180,9 +284,19 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const saveWebhookUrls = () => {
+    localStorage.setItem('n8n_webhook_urls', JSON.stringify(webhookUrls));
+    setShowSettings(false);
+    toast({
+      title: "Settings Saved",
+      description: "n8n webhook URLs have been saved successfully."
+    });
   };
 
   if (showResults && extractedRequirements) {
@@ -306,6 +420,27 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
 
       <Card className="h-[600px] flex flex-col">
         <CardContent className="flex-1 p-6 overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">AI Project Assistant</h2>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGuide(true)}
+                title="Setup Guide"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSettings(true)}
+                title="Webhook Settings"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
           <div className="flex-1 overflow-y-auto space-y-4 mb-4">
             {messages.map((message) => (
               <div
@@ -343,12 +478,13 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Input
+            <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Describe your project requirements..."
-              className="flex-1"
+              className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+              rows={1}
             />
             <Button onClick={handleSendMessage} size="icon">
               <Send className="h-4 w-4" />
@@ -356,6 +492,68 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">n8n Webhook Settings</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSettings(false)}
+                >
+                  ×
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="send-webhook">Send Webhook URL</Label>
+                  <Input
+                    id="send-webhook"
+                    placeholder="https://your-n8n-instance.com/webhook/send"
+                    value={webhookUrls.send}
+                    onChange={(e) => setWebhookUrls(prev => ({ ...prev, send: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    URL to send user messages to n8n
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="receive-webhook">Receive Webhook URL</Label>
+                  <Input
+                    id="receive-webhook"
+                    placeholder="https://your-n8n-instance.com/webhook/receive"
+                    value={webhookUrls.receive}
+                    onChange={(e) => setWebhookUrls(prev => ({ ...prev, receive: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    URL to receive responses from n8n (optional)
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2 pt-4">
+                  <Button onClick={saveWebhookUrls} className="flex-1">
+                    Save Settings
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowSettings(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Setup Guide Modal */}
+      {showGuide && (
+        <N8nSetupGuide onClose={() => setShowGuide(false)} />
+      )}
     </div>
   );
 };

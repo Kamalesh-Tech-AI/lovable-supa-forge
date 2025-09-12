@@ -1,6 +1,6 @@
 import { RequirementsChat } from "@/components/chat/RequirementsChat";
 import { ProjectCard } from "./ProjectCard";
-import { SearchHistory } from "./SearchHistory";
+import { SearchHistory } from "../search/SearchHistory";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
