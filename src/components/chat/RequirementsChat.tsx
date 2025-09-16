@@ -5,10 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Settings, Send, Bot, User, Search, Star, Download, Heart, HelpCircle } from "lucide-react";
+import { Send, Bot, User, Search, Star, Download, Heart, HelpCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { N8nSetupGuide } from "./N8nSetupGuide";
+
 
 interface Message {
   id: string;
@@ -47,7 +47,6 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
   const [input, setInput] = useState('');
   const [showResults, setShowResults] = useState(false);
   const [extractedRequirements, setExtractedRequirements] = useState<any>(null);
-  const [showSettings, setShowSettings] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -279,12 +278,6 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     }
   };
 
-  const openSecretModal = () => {
-    toast({
-      title: "Webhook Configuration",
-      description: "Your n8n webhook URL is securely stored in Supabase secrets. The chatbot will automatically use it when available.",
-    });
-  };
 
   if (showResults && extractedRequirements) {
     return (
@@ -414,17 +407,9 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowGuide(true)}
-                title="Setup Guide"
+                title="Help & Guide"
               >
                 <HelpCircle className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSettings(true)}
-                title="Webhook Settings"
-              >
-                <Settings className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -480,66 +465,51 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
         </CardContent>
       </Card>
 
-      {/* Settings Modal */}
-      {showSettings && (
+      {/* Help Guide Modal */}
+      {showGuide && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-2xl max-h-[80vh] overflow-y-auto">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">n8n Integration Status</h3>
+                <h3 className="text-lg font-semibold">RYZE Platform Guide</h3>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowSettings(false)}
+                  onClick={() => setShowGuide(false)}
                 >
                   ×
                 </Button>
               </div>
               
-              <div className="space-y-4">
-                <div className="p-4 border rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="font-medium">Webhook Status</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Your n8n webhook URL is securely stored in Supabase secrets. The chatbot will automatically attempt to use your n8n workflow when you send messages.
-                  </p>
+              <div className="space-y-4 text-sm">
+                <div>
+                  <h4 className="font-medium mb-2">🛒 Buying Projects</h4>
+                  <p className="text-muted-foreground">Browse our marketplace of premium digital assets. Filter by category, technology, and budget to find exactly what you need.</p>
                 </div>
-
-                <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">How it works:</h4>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <div>1. You send a message in the chat</div>
-                    <div>2. Message is sent to your n8n webhook</div>
-                    <div>3. n8n processes with AI and returns response</div>
-                    <div>4. If n8n fails, fallback responses are used</div>
-                  </div>
+                
+                <div>
+                  <h4 className="font-medium mb-2">💼 Selling Projects</h4>
+                  <p className="text-muted-foreground">Upload your projects with detailed descriptions and live demos. Earn money from your digital creations with our seller-friendly platform.</p>
                 </div>
-
-                <div className="flex items-center space-x-2 pt-4">
-                  <Button onClick={() => setShowSettings(false)} className="flex-1">
-                    Got it
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowSettings(false);
-                      setShowGuide(true);
-                    }}
-                  >
-                    Setup Guide
-                  </Button>
+                
+                <div>
+                  <h4 className="font-medium mb-2">🔧 Custom Development</h4>
+                  <p className="text-muted-foreground">Need something unique? Hire our verified developers for custom projects with milestone-based payments and project management tools.</p>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-2">💬 AI Assistant Tips</h4>
+                  <ul className="text-muted-foreground space-y-1 ml-4">
+                    <li>• Be specific about your requirements</li>
+                    <li>• Mention your preferred technology stack</li>
+                    <li>• Include your budget range</li>
+                    <li>• Ask about custom development options</li>
+                  </ul>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
-      )}
-
-      {/* Setup Guide Modal */}
-      {showGuide && (
-        <N8nSetupGuide onClose={() => setShowGuide(false)} />
       )}
     </div>
   );
