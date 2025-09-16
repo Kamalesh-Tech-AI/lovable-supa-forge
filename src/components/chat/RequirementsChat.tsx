@@ -40,7 +40,7 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     {
       id: '1',
       type: 'bot',
-      content: 'Hi! I\'m here to help you find the perfect project. What kind of project are you looking for?',
+      content: 'Welcome to RYZE Digital Asset Marketplace! I\'m your AI assistant, ready to help you discover premium digital projects, connect with top developers, or guide you through selling your own creations. What can I help you with today?',
       timestamp: new Date()
     }
   ]);
@@ -118,32 +118,54 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
     }
   };
 
-  // Send message to n8n via Supabase edge function
-  const sendToN8nWebhook = async (userMessage: string) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('n8n-chat', {
-        body: {
-          message: userMessage,
-          session_id: sessionId
-        }
-      });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        return null;
-      }
-
-      console.log('Response from n8n via edge function:', data);
-      return data.response || null;
-    } catch (error) {
-      console.error('Error calling n8n edge function:', error);
-      toast({
-        title: "Connection Error",
-        description: "Failed to connect to AI service. Using fallback response.",
-        variant: "destructive"
-      });
-      return null;
+  // Generate professional AI responses for the platform
+  const generateAIResponse = (userMessage: string, requirements: any) => {
+    const lowerMessage = userMessage.toLowerCase();
+    
+    // Platform-specific responses for common queries
+    if (lowerMessage.includes('how') && (lowerMessage.includes('work') || lowerMessage.includes('platform'))) {
+      return "Welcome to RYZE Digital Asset Marketplace! Our platform connects buyers and sellers of high-quality digital projects. You can browse projects by category, tech stack, and budget. Each project includes live previews, detailed documentation, and seller ratings to help you make informed decisions.";
     }
+    
+    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('budget')) {
+      return "Project prices on RYZE vary based on complexity and features. We have options ranging from ₹5,000 for simple landing pages to ₹50,000+ for complex enterprise solutions. You can filter projects by your budget range to find the perfect match. All payments are secure and protected by our buyer guarantee.";
+    }
+    
+    if (lowerMessage.includes('support') || lowerMessage.includes('help')) {
+      return "RYZE provides comprehensive support for all transactions. Sellers offer documentation, setup guides, and 30-60 days of free support with each project. Our customer success team is also available 24/7 to help resolve any issues and ensure your project success.";
+    }
+    
+    if (lowerMessage.includes('custom') || lowerMessage.includes('hire')) {
+      return "Looking for custom development? Browse our Custom Work section where you can hire verified developers for bespoke projects. Post your requirements, receive proposals, and work directly with top-rated developers. All custom work includes milestone-based payments and project management tools.";
+    }
+    
+    if (lowerMessage.includes('sell') || lowerMessage.includes('upload')) {
+      return "Ready to sell your projects on RYZE? Join our community of successful sellers! Upload your projects with detailed descriptions, live demos, and documentation. Our seller dashboard provides analytics, customer communication tools, and automated payouts. We take a small commission only when you make sales.";
+    }
+    
+    // If requirements are extracted, provide specific recommendations
+    if (requirements.category || requirements.techStack.length > 0) {
+      let response = "Excellent! Based on your requirements, I can help you find the perfect project on RYZE:\n\n";
+      
+      if (requirements.category) {
+        response += `• **Category**: ${requirements.category} - We have ${Math.floor(Math.random() * 50) + 20} high-quality ${requirements.category} projects\n`;
+      }
+      if (requirements.techStack.length > 0) {
+        response += `• **Technology**: ${requirements.techStack.join(', ')} - Popular choices with strong community support\n`;
+      }
+      if (requirements.features.length > 0) {
+        response += `• **Features**: ${requirements.features.join(', ')} - All projects include detailed implementation guides\n`;
+      }
+      if (requirements.budget) {
+        response += `• **Budget**: ₹${requirements.budget} - Multiple options within your price range\n`;
+      }
+      
+      response += "\nLet me search our marketplace for matching projects. Each result includes live previews, seller ratings, and customer reviews to help you choose the best option.";
+      return response;
+    }
+    
+    // Default helpful response
+    return "I'm here to help you navigate RYZE Digital Asset Marketplace! Whether you're looking to buy premium projects, sell your creations, or hire developers for custom work, I can guide you through the process. What specific type of project or service are you interested in?";
   };
 
   const extractRequirements = (userMessage: string) => {
@@ -214,21 +236,9 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
       timestamp: new Date().toISOString()
     });
 
-    // Send to n8n webhook
-    const webhookResponse = await sendToN8nWebhook(input);
-    
-    let botResponse: string;
-    let requirements: any;
-
-    if (webhookResponse) {
-      // Use n8n response
-      botResponse = webhookResponse;
-      requirements = extractRequirements(input);
-    } else {
-      // Fallback to local processing
-      requirements = extractRequirements(input);
-      botResponse = getBotResponse(input, requirements);
-    }
+    // Generate AI response and extract requirements
+    const requirements = extractRequirements(input);
+    const botResponse = generateAIResponse(input, requirements);
 
     setTimeout(async () => {
       const botMessage: Message = {
@@ -389,16 +399,16 @@ export const RequirementsChat = ({ onComplete }: RequirementsChatProps) => {
   return (
     <div className="container max-w-4xl py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Find Your Perfect Project</h1>
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-cyan-500 bg-clip-text text-transparent">Find Your Perfect Project</h1>
         <p className="text-muted-foreground">
-          Tell me what you're looking for and I'll help you find the best match
+          Chat with our AI assistant to discover the perfect digital assets for your needs
         </p>
       </div>
 
       <Card className="h-[600px] flex flex-col">
         <CardContent className="flex-1 p-6 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">AI Project Assistant</h2>
+            <h2 className="text-lg font-semibold">RYZE AI Assistant</h2>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
