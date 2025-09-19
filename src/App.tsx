@@ -17,6 +17,7 @@ import { DashboardPage } from "./components/dashboard/DashboardPage";
 import { SettingsPage } from "./components/settings/SettingsPage";
 import { NotificationsPage } from "./components/notifications/NotificationsPage";
 import { UserTypeModal } from "./components/auth/UserTypeModal";
+import { TermsAndConditions } from "./pages/TermsAndConditions";
 
 const queryClient = new QueryClient();
 
@@ -150,6 +151,7 @@ function App() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
+                <Route path="/terms" element={<TermsAndConditions />} />
                 <Route path="/auth" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

@@ -21,11 +21,13 @@ interface ProjectCardProps {
     };
     rating?: number;
     downloads?: number;
+    images?: string[];
+    screenshot_url?: string;
   };
-  onBuyNow: (projectId: string) => void;
+  onProjectClick: (project: any) => void;
 }
 
-export const ProjectCard = ({ project, onBuyNow }: ProjectCardProps) => {
+export const ProjectCard = ({ project, onProjectClick }: ProjectCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
 
   const handleLikeToggle = async () => {
@@ -149,7 +151,7 @@ export const ProjectCard = ({ project, onBuyNow }: ProjectCardProps) => {
             </Button>
             <Button 
               size="sm" 
-              onClick={() => onBuyNow(project.id)}
+              onClick={() => onProjectClick(project)}
               className="bg-gradient-to-r from-primary to-primary/80"
             >
               Buy Now

@@ -1,55 +1,28 @@
-import { RequirementsChat } from "@/components/chat/RequirementsChat";
 import { ProjectCard } from "./ProjectCard";
-import { SearchHistory } from "../search/SearchHistory";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Filter, SlidersHorizontal, History } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ProjectDetailsModal } from "./ProjectDetailsModal";
 
 export const BuyProjectsPage = () => {
   const { toast } = useToast();
-  const [showChat, setShowChat] = useState(true);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showSearchHistory, setShowSearchHistory] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [filters, setFilters] = useState({
-    search: "",
     category: "all",
     priceRange: "all",
     sortBy: "latest"
   });
 
   useEffect(() => {
-    if (!showChat) {
-      fetchProjects();
-    }
-  }, [showChat, filters]);
+    fetchProjects();
+  }, [filters]);
 
-  const saveSearchToHistory = async (searchQuery: string, searchFilters: any, resultsCount: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !searchQuery.trim()) return;
-
-      await supabase
-        .from('search_history')
-        .insert({
-          user_id: user.id,
-          search_query: searchQuery,
-          search_filters: searchFilters,
-          results_count: resultsCount
-        });
-    } catch (error) {
-      console.error('Error saving search history:', error);
-    }
-  };
-
-  const fetchProjects = async (saveToHistory = true) => {
+  const fetchProjects = async () => {
     setLoading(true);
     try {
       let query = supabase
@@ -59,10 +32,6 @@ export const BuyProjectsPage = () => {
           profiles:seller_id(display_name)
         `)
         .eq('status', 'approved');
-
-      if (filters.search) {
-        query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
-      }
 
       if (filters.category && filters.category !== 'all') {
         query = query.eq('category', filters.category);
@@ -91,7 +60,6 @@ export const BuyProjectsPage = () => {
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
 
       // Transform data to include seller info
@@ -146,58 +114,11 @@ export const BuyProjectsPage = () => {
             download_url: null,
             seller_id: '00000000-0000-0000-0000-000000000000',
             profiles: null
-          },
-          {
-            id: 'sample-3',
-            title: 'Task Management App',
-            description: 'Full-featured task management application with team collaboration, deadlines, and progress tracking.',
-            price_inr: 35000,
-            category: 'saas app',
-            tech_stack: ['Vue.js', 'Express.js', 'MongoDB', 'Socket.io'],
-            features: ['Team collaboration', 'Deadline tracking', 'Progress visualization', 'Real-time updates', 'File attachments'],
-            status: 'approved',
-            seller: { display_name: 'Demo Developer' },
-            screenshot_url: '/placeholder.svg',
-            images: ['task-app-1.jpg', 'task-app-2.jpg', 'task-app-3.jpg'],
-            rating: 4.7,
-            downloads: 203,
-            admin_notes: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            download_url: null,
-            seller_id: '00000000-0000-0000-0000-000000000000',
-            profiles: null
-          },
-          {
-            id: 'sample-4',
-            title: 'Restaurant Landing Page',
-            description: 'Beautiful restaurant landing page with menu display, reservation system, and location integration.',
-            price_inr: 20000,
-            category: 'landing page',
-            tech_stack: ['HTML5', 'CSS3', 'JavaScript', 'PHP'],
-            features: ['Menu showcase', 'Online reservations', 'Location maps', 'Gallery', 'Contact integration'],
-            status: 'approved',
-            seller: { display_name: 'Demo Developer' },
-            screenshot_url: '/placeholder.svg',
-            images: ['restaurant-1.jpg', 'restaurant-2.jpg'],
-            rating: 4.6,
-            downloads: 67,
-            admin_notes: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            download_url: null,
-            seller_id: '00000000-0000-0000-0000-000000000000',
-            profiles: null
           }
         ] as any;
       }
 
       setProjects(transformedProjects);
-
-      // Save search to history if there's a search query and we should save
-      if (saveToHistory && filters.search.trim()) {
-        await saveSearchToHistory(filters.search, filters, transformedProjects.length);
-      }
     } catch (error) {
       console.error('Error fetching projects:', error);
       toast({
@@ -210,48 +131,9 @@ export const BuyProjectsPage = () => {
     }
   };
 
-  const handleBuyNow = async (projectId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to purchase projects.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // Here you would typically integrate with a payment system
-    toast({
-      title: "Coming Soon",
-      description: "Payment integration will be available soon!",
-    });
-  };
-
-  const handleRequirementsComplete = (requirements: any) => {
-    setShowChat(false);
-    // Use requirements to filter projects
-    if (requirements.category) {
-      setFilters(prev => ({ ...prev, category: requirements.category.toLowerCase() }));
-    }
-    if (requirements.budget) {
-      setFilters(prev => ({ ...prev, priceRange: requirements.budget }));
-    }
-    
-    // Show filtered results
-    fetchProjects();
-  };
-
-  const handleSelectHistory = (searchQuery: string, searchFilters: any) => {
-    setFilters({
-      search: searchQuery,
-      category: searchFilters.category || "all",
-      priceRange: searchFilters.priceRange || "all",
-      sortBy: searchFilters.sortBy || "latest"
-    });
-    // Don't save to history when loading from history
-    fetchProjects(false);
+  const handleProjectClick = (project) => {
+    setSelectedProject(project);
+    setShowDetailsModal(true);
   };
 
   const categories = [
@@ -259,72 +141,17 @@ export const BuyProjectsPage = () => {
     "SaaS App", "Mobile App", "Game", "Educational", "Social Media"
   ];
 
-  if (showChat) {
-    return (
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Find Your Perfect Project</h1>
-          <p className="text-muted-foreground">
-            Tell us what you're looking for and we'll show you the best matches
-          </p>
-        </div>
-        
-        <RequirementsChat onComplete={handleRequirementsComplete} />
-        
-        <div className="text-center mt-8">
-          <Button 
-            variant="outline" 
-            onClick={() => setShowChat(false)}
-          >
-            Or browse all projects
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container py-8">
       <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Browse Projects</h1>
-            <p className="text-muted-foreground">
-              {projects.length} projects available
-            </p>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowChat(true)}
-          >
-            Back to Requirements Chat
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold mb-2">Browse Projects</h1>
+        <p className="text-muted-foreground">
+          {projects.length} projects available
+        </p>
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 p-6 bg-muted/50 rounded-lg">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Search</label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search projects..."
-              value={filters.search}
-              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-              className="pl-10 pr-10"
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSearchHistory(true)}
-              className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
-            >
-              <History className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 p-6 bg-muted/50 rounded-lg">
         <div className="space-y-2">
           <label className="text-sm font-medium">Category</label>
           <Select value={filters.category} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
@@ -373,16 +200,6 @@ export const BuyProjectsPage = () => {
         </div>
       </div>
 
-      {/* Search History Modal */}
-      {showSearchHistory && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <SearchHistory
-            onSelectHistory={handleSelectHistory}
-            onClose={() => setShowSearchHistory(false)}
-          />
-        </div>
-      )}
-
       {/* Projects Grid */}
       {loading ? (
         <div className="text-center py-12">
@@ -398,10 +215,19 @@ export const BuyProjectsPage = () => {
             <ProjectCard
               key={project.id}
               project={project}
-              onBuyNow={handleBuyNow}
+              onProjectClick={handleProjectClick}
             />
           ))}
         </div>
+      )}
+
+      {/* Project Details Modal */}
+      {selectedProject && (
+        <ProjectDetailsModal
+          project={selectedProject}
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+        />
       )}
     </div>
   );

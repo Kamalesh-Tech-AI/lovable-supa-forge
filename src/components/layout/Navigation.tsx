@@ -11,6 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ShoppingCart, User, Settings, LogOut, Home, ShoppingBag, Wrench, BarChart3, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NavigationProps {
   user: SupabaseUser;
@@ -19,6 +21,48 @@ interface NavigationProps {
 
 export const Navigation = ({ user, onSignOut }: NavigationProps) => {
   const location = useLocation();
+  const [notificationCount, setNotificationCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchNotificationCount();
+      
+      // Subscribe to real-time notifications
+      const channel = supabase
+        .channel('notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          },
+          () => {
+            fetchNotificationCount();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user]);
+
+  const fetchNotificationCount = async () => {
+    try {
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+      
+      setNotificationCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching notification count:', error);
+    }
+  };
 
   const navigationItems = [
     { href: "/", label: "Home", icon: Home },
@@ -74,6 +118,21 @@ export const Navigation = ({ user, onSignOut }: NavigationProps) => {
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Notifications Bell */}
+            <Link to="/notifications" className="relative">
+              <Button variant="ghost" size="sm" className="relative">
+                <Bell className="h-5 w-5" />
+                {notificationCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                  >
+                    {notificationCount > 99 ? '99+' : notificationCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -97,12 +156,6 @@ export const Navigation = ({ user, onSignOut }: NavigationProps) => {
                   <Link to="/dashboard" className="cursor-pointer">
                     <BarChart3 className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/notifications" className="cursor-pointer">
-                    <Bell className="mr-2 h-4 w-4" />
-                    <span>Notifications</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

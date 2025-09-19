@@ -3,15 +3,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { TermsAndConditionsModal } from "./TermsAndConditionsModal";
 
 export const AuthPage = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [pendingGoogleAuth, setPendingGoogleAuth] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [loginData, setLoginData] = useState({
     email: "",
     password: ""
@@ -112,6 +117,15 @@ export const AuthPage = () => {
       return;
     }
 
+    if (!acceptedTerms) {
+      toast({
+        title: "Terms and Conditions",
+        description: "Please accept the Terms and Conditions to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (signupData.password !== signupData.confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -191,7 +205,15 @@ export const AuthPage = () => {
   };
 
   const handleGoogleSignIn = async () => {
+    setPendingGoogleAuth(true);
+    setShowTermsModal(true);
+  };
+
+  const handleGoogleAuthConfirm = async () => {
     setIsLoading(true);
+    setShowTermsModal(false);
+    setPendingGoogleAuth(false);
+    
     try {
       cleanupAuthState();
       
@@ -222,6 +244,11 @@ export const AuthPage = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleTermsModalClose = () => {
+    setShowTermsModal(false);
+    setPendingGoogleAuth(false);
   };
 
   return (
@@ -383,7 +410,21 @@ export const AuthPage = () => {
                       />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Checkbox
+                      id="accept-terms-signup"
+                      checked={acceptedTerms}
+                      onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                    />
+                    <label
+                      htmlFor="accept-terms-signup"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      I agree to the Terms and Conditions
+                    </label>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={isLoading || !acceptedTerms}>
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -417,6 +458,13 @@ export const AuthPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={handleTermsModalClose}
+        onAccept={pendingGoogleAuth ? handleGoogleAuthConfirm : () => setShowTermsModal(false)}
+        title={pendingGoogleAuth ? "Accept Terms for Google Sign In" : "Terms and Conditions"}
+      />
     </div>
   );
 };
