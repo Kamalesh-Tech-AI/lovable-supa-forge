@@ -42,10 +42,10 @@ const Index = () => {
   ];
 
   const stats = [
-    { icon: Users, label: "Active Users", value: "10,000+" },
-    { icon: Code, label: "Projects Sold", value: "2,500+" },
-    { icon: TrendingUp, label: "Revenue Generated", value: "₹50L+" },
-    { icon: Award, label: "Top Developers", value: "500+" }
+    { icon: Users, label: "Active Users", value: "100+" },
+    { icon: Code, label: "Projects Sold", value: "50+" },
+    { icon: TrendingUp, label: "Revenue Generated", value: "₹15k+" },
+    { icon: Award, label: "Top Developers", value: "20+" }
   ];
 
   const categories = [
