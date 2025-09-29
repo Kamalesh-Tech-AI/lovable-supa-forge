@@ -14,10 +14,12 @@ import {
   CheckCircle,
   Star,
   DollarSign,
-  Eye
+  Eye,
+  Image
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectDetailsModal } from "@/components/buy/ProjectDetailsModal";
 
 export const DashboardPage = () => {
   const [user, setUser] = useState(null);
@@ -28,6 +30,8 @@ export const DashboardPage = () => {
   const [userPurchases, setPurchases] = useState([]);
   const [userLikes, setUserLikes] = useState([]);
   const [userRequests, setUserRequests] = useState([]);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -113,6 +117,19 @@ export const DashboardPage = () => {
     averageRating: 4.8 // This would come from reviews in a real app
   };
 
+  const handlePreviewProject = (likedProject) => {
+    // Transform the liked project data to match the expected format
+    const projectData = {
+      ...likedProject.projects,
+      seller: {
+        display_name: likedProject.projects?.profiles?.display_name || 'Unknown Seller'
+      },
+      rating: 4.8, // Default rating
+      downloads: Math.floor(Math.random() * 200) + 50 // Mock downloads
+    };
+    setSelectedProject(projectData);
+    setShowDetailsModal(true);
+  };
   const BuyerDashboard = () => (
     <div className="space-y-6">
       {/* Stats Overview */}
@@ -223,12 +240,17 @@ export const DashboardPage = () => {
               <Card key={like.id}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex items-center space-x-4">
+                      <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Image className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                      <div>
                       <h3 className="font-semibold text-lg">{like.projects?.title}</h3>
                       <p className="text-muted-foreground">by {like.projects?.profiles?.display_name}</p>
                       <div className="flex items-center space-x-1 mt-2">
                         <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                         <span className="text-sm">4.8</span>
+                      </div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -240,7 +262,12 @@ export const DashboardPage = () => {
                           <Eye className="h-4 w-4 mr-2" />
                           Preview
                         </Button>
-                        <Button size="sm">Buy Now</Button>
+                        <Button 
+                          size="sm"
+                          onClick={() => handlePreviewProject(like)}
+                        >
+                          Buy Now
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -382,7 +409,8 @@ export const DashboardPage = () => {
   );
 
   return (
-    <div className="container py-8">
+    <>
+      <div className="container py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
         <p className="text-muted-foreground">
@@ -401,6 +429,16 @@ export const DashboardPage = () => {
       ) : (
         <BuyerDashboard />
       )}
-    </div>
+      </div>
+
+      {/* Project Details Modal */}
+      {selectedProject && (
+        <ProjectDetailsModal
+          project={selectedProject}
+          isOpen={showDetailsModal}
+          onClose={() => setShowDetailsModal(false)}
+        />
+      )}
+    </>
   );
 };
