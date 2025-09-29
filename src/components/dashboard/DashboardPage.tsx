@@ -4,19 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Download, 
-  Heart, 
-  ShoppingCart, 
-  Upload, 
-  TrendingUp, 
-  Clock, 
-  CheckCircle,
-  Star,
-  DollarSign,
-  Eye,
-  Image
-} from "lucide-react";
+import { Download, Heart, ShoppingCart, Upload, TrendingUp, Clock, CircleCheck as CheckCircle, Star, DollarSign, Eye, Image } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ProjectDetailsModal } from "@/components/buy/ProjectDetailsModal";
