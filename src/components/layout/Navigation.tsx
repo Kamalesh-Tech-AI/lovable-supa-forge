@@ -2,11 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShoppingCart, User, Settings, LogOut, Home, ShoppingBag, Wrench, BarChart3, Bell } from "lucide-react";
+import { ShoppingCart, User, Settings, LogOut, Chrome as Home, ShoppingBag, Wrench, ChartBar as BarChart3, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import ryzeLogo from "@/assets/ryze.png";
 interface NavigationProps {
   user: SupabaseUser;
   onSignOut: () => void;
@@ -81,7 +82,11 @@ export const Navigation = ({
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center space-x-8">
             <Link to="/" className="flex items-center space-x-3">
-              
+              <img 
+                src={ryzeLogo} 
+                alt="RYZE Logo" 
+                className="h-8 w-8 rounded-lg object-cover"
+              />
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary-variant bg-clip-text text-transparent">
                 RYZE
               </span>
