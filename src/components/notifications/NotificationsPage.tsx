@@ -35,7 +35,10 @@ export const NotificationsPage = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setNotifications(data || []);
+      setNotifications((data || []).map(n => ({
+        ...n,
+        type: (n.type || 'info') as 'info' | 'success' | 'warning' | 'error'
+      })));
     } catch (error) {
       console.error('Error fetching notifications:', error);
       toast.error('Failed to load notifications');

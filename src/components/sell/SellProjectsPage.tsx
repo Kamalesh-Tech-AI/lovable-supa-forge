@@ -10,6 +10,7 @@ import { Upload, FileText, DollarSign, Tags, Image, CheckCircle } from "lucide-r
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { UpgradeModal } from "./UpgradeModal";
 
 export const SellProjectsPage = () => {
   const { toast } = useToast();
@@ -28,6 +29,9 @@ export const SellProjectsPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [projectCount, setProjectCount] = useState(0);
+  const [subscription, setSubscription] = useState<any>(null);
 
   const handleInputChange = (field: string, value: any) => {
     setProjectData(prev => ({ ...prev, [field]: value }));
@@ -37,6 +41,37 @@ export const SellProjectsPage = () => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      if (user) {
+        // Check user's subscription status
+        const { data: subData } = await supabase
+          .from('seller_subscriptions')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (!subData) {
+          // Create default free subscription
+          await supabase
+            .from('seller_subscriptions')
+            .insert({
+              user_id: user.id,
+              plan_type: 'free',
+              max_projects: 3
+            });
+          setSubscription({ plan_type: 'free', max_projects: 3 });
+        } else {
+          setSubscription(subData);
+        }
+        
+        // Get current project count
+        const { count } = await supabase
+          .from('sell_projects')
+          .select('*', { count: 'exact', head: true })
+          .eq('seller_id', user.id);
+        
+        setProjectCount(count || 0);
+      }
     };
     getUser();
   }, []);
@@ -103,6 +138,13 @@ export const SellProjectsPage = () => {
   };
 
   const handleSubmit = async (isDraft = false) => {
+    // Check project limit
+    const maxProjects = subscription?.max_projects || 3;
+    if (projectCount >= maxProjects) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
     if (!user) {
       toast({
         title: "Authentication required",
@@ -457,6 +499,14 @@ export const SellProjectsPage = () => {
           </Card>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentProjects={projectCount}
+        maxProjects={subscription?.max_projects || 3}
+      />
     </div>
   );
 };

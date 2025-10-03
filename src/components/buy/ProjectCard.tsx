@@ -144,19 +144,13 @@ export const ProjectCard = ({ project, onProjectClick }: ProjectCardProps) => {
             </p>
             <p className="text-xs text-muted-foreground">One-time purchase</p>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              <Eye className="h-4 w-4 mr-1" />
-              Preview
-            </Button>
-            <Button 
-              size="sm" 
-              onClick={() => onProjectClick(project)}
-              className="bg-gradient-to-r from-primary to-primary/80"
-            >
-              Buy Now
-            </Button>
-          </div>
+          <Button 
+            size="sm" 
+            onClick={() => onProjectClick(project)}
+            className="bg-gradient-to-r from-primary to-primary/80"
+          >
+            View Project
+          </Button>
         </div>
       </CardContent>
     </Card>

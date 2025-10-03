@@ -308,21 +308,64 @@ export const DashboardPage = () => {
     </div>
   );
 
-  const SellerDashboard = () => (
-    <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2">
-              <Upload className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-2xl font-bold">{userProjects.length}</p>
-                <p className="text-sm text-muted-foreground">Projects Listed</p>
+  const SellerDashboard = () => {
+    const [subscription, setSubscription] = useState<any>(null);
+
+    useEffect(() => {
+      const fetchSubscription = async () => {
+        if (user) {
+          const { data } = await supabase
+            .from('seller_subscriptions')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          setSubscription(data || { plan_type: 'free', max_projects: 3 });
+        }
+      };
+      fetchSubscription();
+    }, [user]);
+
+    return (
+      <div className="space-y-6">
+        {/* Subscription Info */}
+        {subscription && (
+          <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Your Plan</p>
+                  <p className="text-2xl font-bold capitalize">{subscription.plan_type}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Projects</p>
+                  <p className="text-2xl font-bold">
+                    {userProjects.length}/{subscription.max_projects}
+                  </p>
+                </div>
+                {subscription.plan_type === 'free' && userProjects.length >= subscription.max_projects && (
+                  <Button className="bg-gradient-to-r from-primary to-primary-variant">
+                    Upgrade Now
+                  </Button>
+                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-2">
+                <Upload className="h-5 w-5 text-primary" />
+                <div>
+                  <p className="text-2xl font-bold">{userProjects.length}</p>
+                  <p className="text-sm text-muted-foreground">Projects Listed</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
         <Card>
           <CardContent className="p-6">
@@ -393,8 +436,9 @@ export const DashboardPage = () => {
           )}
         </CardContent>
       </Card>
-    </div>
-  );
+      </div>
+    );
+  };
 
   return (
     <>
