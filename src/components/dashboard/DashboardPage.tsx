@@ -20,6 +20,7 @@ export const DashboardPage = () => {
   const [userRequests, setUserRequests] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [subscription, setSubscription] = useState<any>(null);
 
   useEffect(() => {
     const getUserData = async () => {
@@ -36,6 +37,17 @@ export const DashboardPage = () => {
             .single();
           
           setUserProfile(profile);
+
+          // Get user's subscription if they're a seller
+          if (profile?.role === 'seller') {
+            const { data: subData } = await supabase
+              .from('seller_subscriptions')
+              .select('*')
+              .eq('user_id', user.id)
+              .single();
+            
+            setSubscription(subData || { plan_type: 'free', max_projects: 3 });
+          }
 
           // Get user's projects if they're a seller
           if (profile?.role === 'seller') {
@@ -308,25 +320,7 @@ export const DashboardPage = () => {
     </div>
   );
 
-  const SellerDashboard = () => {
-    const [subscription, setSubscription] = useState<any>(null);
-
-    useEffect(() => {
-      const fetchSubscription = async () => {
-        if (user) {
-          const { data } = await supabase
-            .from('seller_subscriptions')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-          
-          setSubscription(data || { plan_type: 'free', max_projects: 3 });
-        }
-      };
-      fetchSubscription();
-    }, [user]);
-
-    return (
+  const SellerDashboard = () => (
       <div className="space-y-6">
         {/* Subscription Info */}
         {subscription && (
@@ -436,9 +430,8 @@ export const DashboardPage = () => {
           )}
         </CardContent>
       </Card>
-      </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <>

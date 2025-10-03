@@ -145,9 +145,8 @@ export const ProjectCard = ({ project, onProjectClick }: ProjectCardProps) => {
             <p className="text-xs text-muted-foreground">One-time purchase</p>
           </div>
           <Button 
-            size="sm" 
             onClick={() => onProjectClick(project)}
-            className="bg-gradient-to-r from-primary to-primary/80"
+            className="bg-gradient-to-r from-primary to-primary-variant"
           >
             View Project
           </Button>
