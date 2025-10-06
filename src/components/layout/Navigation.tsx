@@ -77,82 +77,104 @@ export const Navigation = ({
     const displayName = getUserDisplayName();
     return displayName.charAt(0).toUpperCase();
   };
-  return <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center space-x-3">
+  return <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div className="container mx-auto px-3 sm:px-4 md:px-6">
+        <div className="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 lg:gap-8">
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
               <img 
                 src={ryzeLogo} 
                 alt="RYZE Logo" 
-                className="h-8 w-8 rounded-lg object-cover"
+                className="h-6 w-6 sm:h-8 sm:w-8 rounded-lg object-cover"
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary-variant bg-clip-text text-transparent">
+              <span className="text-base sm:text-xl font-bold bg-gradient-to-r from-primary to-primary-variant bg-clip-text text-transparent hidden xs:inline">
                 RYZE
               </span>
             </Link>
             
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden lg:flex items-center gap-4 xl:gap-6">
               {navigationItems.map(item => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href;
-              return <Link key={item.href} to={item.href} className={`flex items-center space-x-2 text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-muted-foreground"}`}>
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+              return <Link key={item.href} to={item.href} className={`flex items-center gap-1.5 xl:gap-2 text-xs xl:text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-muted-foreground"}`}>
+                    <Icon className="h-3.5 w-3.5 xl:h-4 xl:w-4" />
+                    <span className="hidden xl:inline">{item.label}</span>
                   </Link>;
             })}
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
             {/* Notifications Bell */}
             <Link to="/notifications" className="relative">
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-5 w-5" />
-                {notificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                    {notificationCount > 99 ? '99+' : notificationCount}
+              <Button variant="ghost" size="sm" className="relative h-8 w-8 sm:h-9 sm:w-9 p-0">
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+                {notificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-[10px] sm:text-xs">
+                    {notificationCount > 9 ? '9+' : notificationCount}
                   </Badge>}
               </Button>
             </Link>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
+                <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0">
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                     <AvatarImage src="" alt={getUserDisplayName()} />
-                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    <AvatarFallback className="text-xs sm:text-sm">{getUserInitials()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-56 sm:w-64" align="end" forceMount>
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{getUserDisplayName()}</p>
-                    <p className="w-[200px] truncate text-sm text-muted-foreground">
+                    <p className="font-medium text-sm sm:text-base truncate">{getUserDisplayName()}</p>
+                    <p className="w-[180px] sm:w-[220px] truncate text-xs sm:text-sm text-muted-foreground">
                       {user.email}
                     </p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="cursor-pointer">
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/dashboard">
                     <BarChart3 className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
+                    <span className="text-sm">Dashboard</span>
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="cursor-pointer">
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link to="/settings">
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                    <span className="text-sm">Settings</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600" onClick={onSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span className="text-sm">Sign out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+
+          {/* Mobile Bottom Navigation - Only visible on mobile/tablet */}
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t z-50">
+            <div className="grid grid-cols-5 gap-1 p-2">
+              {navigationItems.map(item => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link 
+                    key={item.href} 
+                    to={item.href} 
+                    className={`flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-md transition-colors ${
+                      isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span className="text-[10px] font-medium truncate w-full text-center">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

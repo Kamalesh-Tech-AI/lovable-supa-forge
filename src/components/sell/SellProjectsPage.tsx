@@ -225,39 +225,39 @@ export const SellProjectsPage = () => {
   };
 
   return (
-    <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Sell Your Project</h1>
-        <p className="text-muted-foreground">
+    <div className="container py-4 sm:py-6 md:py-8 pb-20 lg:pb-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold mb-2">Sell Your Project</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
           Share your work with thousands of developers and earn money
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         {/* Submission Steps */}
         <div className="lg:col-span-1">
-          <Card>
-            <CardHeader>
-              <CardTitle>Submission Process</CardTitle>
-              <CardDescription>Follow these steps to list your project</CardDescription>
+          <Card className="lg:sticky lg:top-20">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">Submission Process</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Follow these steps to list your project</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+            <CardContent className="p-4 sm:p-6 pt-0">
+              <div className="space-y-3 sm:space-y-4">
                 {submissionSteps.map((step, index) => {
                   const Icon = step.icon;
                   return (
-                    <div key={step.id} className="flex items-center space-x-3">
-                      <div className={`rounded-full p-2 ${
+                    <div key={step.id} className="flex items-center space-x-2 sm:space-x-3">
+                      <div className={`rounded-full p-1.5 sm:p-2 ${
                         step.completed 
                           ? "bg-success text-success-foreground" 
                           : index === 0 
                             ? "bg-primary text-primary-foreground" 
                             : "bg-muted text-muted-foreground"
                       }`}>
-                        <Icon className="h-4 w-4" />
+                        <Icon className="h-3 w-3 sm:h-4 sm:w-4" />
                       </div>
                       <div className="flex-1">
-                        <p className={`font-medium ${
+                        <p className={`font-medium text-xs sm:text-sm ${
                           step.completed ? "text-success" : index === 0 ? "text-primary" : "text-muted-foreground"
                         }`}>
                           {step.title}
@@ -270,25 +270,25 @@ export const SellProjectsPage = () => {
             </CardContent>
           </Card>
 
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Requirements</CardTitle>
+          <Card className="mt-4 sm:mt-6 hidden sm:block">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-base sm:text-lg">Requirements</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 text-sm">
+            <CardContent className="space-y-2 sm:space-y-3 text-xs sm:text-sm p-4 sm:p-6 pt-0">
               <div className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success mt-0.5 flex-shrink-0" />
                 <span>Complete source code in ZIP format</span>
               </div>
               <div className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success mt-0.5 flex-shrink-0" />
                 <span>Clear documentation and setup instructions</span>
               </div>
               <div className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success mt-0.5 flex-shrink-0" />
                 <span>Working demo command for screenshots</span>
               </div>
               <div className="flex items-start space-x-2">
-                <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success mt-0.5 flex-shrink-0" />
                 <span>Original work or proper licensing</span>
               </div>
             </CardContent>

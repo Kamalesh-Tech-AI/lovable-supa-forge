@@ -142,20 +142,20 @@ export const BuyProjectsPage = () => {
   ];
 
   return (
-    <div className="container py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Browse Projects</h1>
-        <p className="text-muted-foreground">
+    <div className="container py-4 sm:py-6 md:py-8 pb-20 lg:pb-8">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl xs:text-3xl sm:text-4xl font-bold mb-2">Browse Projects</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
           {projects.length} projects available
         </p>
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 p-6 bg-muted/50 rounded-lg">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Category</label>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8 p-4 sm:p-6 bg-muted/50 rounded-lg">
+        <div className="space-y-1.5 sm:space-y-2">
+          <label className="text-xs sm:text-sm font-medium">Category</label>
           <Select value={filters.category} onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}>
-            <SelectTrigger>
+            <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
               <SelectValue placeholder="All categories" />
             </SelectTrigger>
             <SelectContent>
@@ -169,10 +169,10 @@ export const BuyProjectsPage = () => {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Price Range</label>
+        <div className="space-y-1.5 sm:space-y-2">
+          <label className="text-xs sm:text-sm font-medium">Price Range</label>
           <Select value={filters.priceRange} onValueChange={(value) => setFilters(prev => ({ ...prev, priceRange: value }))}>
-            <SelectTrigger>
+            <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
               <SelectValue placeholder="All prices" />
             </SelectTrigger>
             <SelectContent>
@@ -185,10 +185,10 @@ export const BuyProjectsPage = () => {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Sort by</label>
+        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2 md:col-span-1">
+          <label className="text-xs sm:text-sm font-medium">Sort by</label>
           <Select value={filters.sortBy} onValueChange={(value) => setFilters(prev => ({ ...prev, sortBy: value }))}>
-            <SelectTrigger>
+            <SelectTrigger className="h-9 sm:h-10 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -210,7 +210,7 @@ export const BuyProjectsPage = () => {
           <p className="text-muted-foreground">No projects found matching your criteria.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {projects.map((project) => (
             <ProjectCard
               key={project.id}

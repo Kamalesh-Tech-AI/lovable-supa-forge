@@ -143,6 +143,7 @@ function App() {
           {user ? (
             <div className="min-h-screen bg-background">
               <Navigation user={user} onSignOut={handleSignOut} />
+              <main className="min-h-[calc(100vh-4rem)]">
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/buy" element={<BuyProjectsPage />} />
@@ -155,6 +156,7 @@ function App() {
                 <Route path="/auth" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+              </main>
               
               {/* User Type Selection Modal */}
               {user && showUserTypeModal && (
