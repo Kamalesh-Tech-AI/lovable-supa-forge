@@ -81,13 +81,13 @@ export const Navigation = ({
       <div className="container mx-auto px-3 sm:px-4 md:px-6">
         <div className="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-3 sm:gap-4 lg:gap-8">
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
               <img 
                 src={ryzeLogo} 
                 alt="RYZE Logo" 
-                className="h-6 w-6 sm:h-8 sm:w-8 rounded-lg object-cover"
+                className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 rounded-lg object-cover flex-shrink-0"
               />
-              <span className="text-base sm:text-xl font-bold bg-gradient-to-r from-primary to-primary-variant bg-clip-text text-transparent hidden xs:inline">
+              <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-primary to-primary-variant bg-clip-text text-transparent hidden sm:inline">
                 RYZE
               </span>
             </Link>
@@ -104,12 +104,12 @@ export const Navigation = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 flex-shrink-0">
             {/* Notifications Bell */}
-            <Link to="/notifications" className="relative">
-              <Button variant="ghost" size="sm" className="relative h-8 w-8 sm:h-9 sm:w-9 p-0">
-                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                {notificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-[10px] sm:text-xs">
+            <Link to="/notifications" className="relative flex-shrink-0">
+              <Button variant="ghost" size="sm" className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 p-0">
+                <Bell className="h-4 w-4 sm:h-4.5 sm:w-4.5 md:h-5 md:w-5" />
+                {notificationCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 flex items-center justify-center text-[9px] sm:text-[10px] md:text-xs">
                     {notificationCount > 9 ? '9+' : notificationCount}
                   </Badge>}
               </Button>
@@ -117,14 +117,14 @@ export const Navigation = ({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full p-0">
-                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+                <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 rounded-full p-0 flex-shrink-0">
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10">
                     <AvatarImage src="" alt={getUserDisplayName()} />
-                    <AvatarFallback className="text-xs sm:text-sm">{getUserInitials()}</AvatarFallback>
+                    <AvatarFallback className="text-[10px] sm:text-xs md:text-sm">{getUserInitials()}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56 sm:w-64" align="end" forceMount>
+              <DropdownMenuContent className="w-48 sm:w-56 md:w-64 bg-background z-[100]" align="end" forceMount>
                 <div className="flex items-center justify-start gap-2 p-2">
                   <div className="flex flex-col space-y-1 leading-none">
                     <p className="font-medium text-sm sm:text-base truncate">{getUserDisplayName()}</p>
