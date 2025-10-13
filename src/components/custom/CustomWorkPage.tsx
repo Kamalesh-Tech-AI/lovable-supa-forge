@@ -9,11 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Plus, MessageSquare, Clock, CheckCircle, User, Star } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export const CustomWorkPage = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("create");
   const [user, setUser] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -288,11 +290,16 @@ export const CustomWorkPage = () => {
               )}
 
               <div className="flex justify-between pt-4">
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate(`/custom/messages/${request.id}`)}
+                >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   View Messages
                 </Button>
-                <Button>View Details</Button>
+                <Button onClick={() => navigate(`/custom/details/${request.id}`)}>
+                  View Details
+                </Button>
               </div>
             </CardContent>
           </Card>

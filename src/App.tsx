@@ -14,6 +14,8 @@ import { AppSidebar } from "./components/layout/AppSidebar";
 import { BuyProjectsPage } from "./components/buy/BuyProjectsPage";
 import { SellProjectsPage } from "./components/sell/SellProjectsPage";
 import { CustomWorkPage } from "./components/custom/CustomWorkPage";
+import { RequestMessagesPage } from "./components/custom/RequestMessagesPage";
+import { RequestDetailsPage } from "./components/custom/RequestDetailsPage";
 import { DashboardPage } from "./components/dashboard/DashboardPage";
 import { SettingsPage } from "./components/settings/SettingsPage";
 import { NotificationsPage } from "./components/notifications/NotificationsPage";
@@ -154,6 +156,8 @@ function App() {
                       <Route path="/buy" element={<BuyProjectsPage />} />
                       <Route path="/sell" element={<SellProjectsPage />} />
                       <Route path="/custom" element={<CustomWorkPage />} />
+                      <Route path="/custom/messages/:requestId" element={<RequestMessagesPage />} />
+                      <Route path="/custom/details/:requestId" element={<RequestDetailsPage />} />
                       <Route path="/dashboard" element={<DashboardPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
                       <Route path="/notifications" element={<NotificationsPage />} />
