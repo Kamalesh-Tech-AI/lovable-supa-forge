@@ -10,6 +10,7 @@ import { Session, User } from "@supabase/supabase-js";
 import Index from "./pages/Index";
 import { AuthPage } from "./components/auth/AuthPage";
 import { Navigation } from "./components/layout/Navigation";
+import { AppSidebar } from "./components/layout/AppSidebar";
 import { BuyProjectsPage } from "./components/buy/BuyProjectsPage";
 import { SellProjectsPage } from "./components/sell/SellProjectsPage";
 import { CustomWorkPage } from "./components/custom/CustomWorkPage";
@@ -18,6 +19,7 @@ import { SettingsPage } from "./components/settings/SettingsPage";
 import { NotificationsPage } from "./components/notifications/NotificationsPage";
 import { UserTypeModal } from "./components/auth/UserTypeModal";
 import { TermsAndConditions } from "./pages/TermsAndConditions";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 const queryClient = new QueryClient();
 
@@ -141,32 +143,37 @@ function App() {
         <Sonner />
         <BrowserRouter>
           {user ? (
-            <div className="min-h-screen bg-background">
-              <Navigation user={user} onSignOut={handleSignOut} />
-              <main className="min-h-[calc(100vh-4rem)]">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/buy" element={<BuyProjectsPage />} />
-                <Route path="/sell" element={<SellProjectsPage />} />
-                <Route path="/custom" element={<CustomWorkPage />} />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-                <Route path="/terms" element={<TermsAndConditions />} />
-                <Route path="/auth" element={<Navigate to="/" replace />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-              </main>
-              
-              {/* User Type Selection Modal */}
-              {user && showUserTypeModal && (
-                <UserTypeModal
-                  isOpen={showUserTypeModal}
-                  onClose={handleUserTypeModalClose}
-                  userId={user.id}
-                />
-              )}
-            </div>
+            <SidebarProvider>
+              <div className="min-h-screen flex w-full bg-background">
+                <AppSidebar />
+                <div className="flex-1 flex flex-col w-full">
+                  <Navigation user={user} onSignOut={handleSignOut} />
+                  <main className="flex-1 overflow-auto">
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/buy" element={<BuyProjectsPage />} />
+                      <Route path="/sell" element={<SellProjectsPage />} />
+                      <Route path="/custom" element={<CustomWorkPage />} />
+                      <Route path="/dashboard" element={<DashboardPage />} />
+                      <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/notifications" element={<NotificationsPage />} />
+                      <Route path="/terms" element={<TermsAndConditions />} />
+                      <Route path="/auth" element={<Navigate to="/" replace />} />
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </main>
+                </div>
+                
+                {/* User Type Selection Modal */}
+                {user && showUserTypeModal && (
+                  <UserTypeModal
+                    isOpen={showUserTypeModal}
+                    onClose={handleUserTypeModalClose}
+                    userId={user.id}
+                  />
+                )}
+              </div>
+            </SidebarProvider>
           ) : (
             <Routes>
               <Route path="/auth" element={<AuthPage />} />

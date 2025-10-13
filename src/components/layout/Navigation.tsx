@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ShoppingCart, User, Settings, LogOut, Chrome as Home, ShoppingBag, Wrench, ChartBar as BarChart3, Bell } from "lucide-react";
+import { Settings, LogOut, BarChart3, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import ryzeLogo from "@/assets/ryze.png";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 interface NavigationProps {
   user: SupabaseUser;
   onSignOut: () => void;
@@ -49,27 +50,6 @@ export const Navigation = ({
       console.error('Error fetching notification count:', error);
     }
   };
-  const navigationItems = [{
-    href: "/",
-    label: "Home",
-    icon: Home
-  }, {
-    href: "/buy",
-    label: "Buy Projects",
-    icon: ShoppingCart
-  }, {
-    href: "/sell",
-    label: "Sell Projects",
-    icon: ShoppingBag
-  }, {
-    href: "/custom",
-    label: "Custom Work",
-    icon: Wrench
-  }, {
-    href: "/dashboard",
-    label: "Dashboard",
-    icon: BarChart3
-  }];
   const getUserDisplayName = () => {
     return user.user_metadata?.display_name || user.email?.split('@')[0] || 'User';
   };
@@ -80,28 +60,18 @@ export const Navigation = ({
   return <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container mx-auto px-3 sm:px-4 md:px-6">
         <div className="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-4 lg:gap-8">
+          <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+            <SidebarTrigger className="flex-shrink-0" />
             <Link to="/" className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
               <img 
                 src={ryzeLogo} 
                 alt="RYZE Logo" 
                 className="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9 rounded-lg object-cover flex-shrink-0"
               />
-              <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-primary to-primary-variant bg-clip-text text-transparent hidden sm:inline">
+              <span className="text-sm sm:text-base md:text-lg lg:text-xl font-bold bg-gradient-to-r from-primary to-primary-variant bg-clip-text text-transparent">
                 RYZE
               </span>
             </Link>
-            
-            <div className="hidden lg:flex items-center gap-4 xl:gap-6">
-              {navigationItems.map(item => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.href;
-              return <Link key={item.href} to={item.href} className={`flex items-center gap-1.5 xl:gap-2 text-xs xl:text-sm font-medium transition-colors hover:text-primary ${isActive ? "text-primary border-b-2 border-primary pb-1" : "text-muted-foreground"}`}>
-                    <Icon className="h-3.5 w-3.5 xl:h-4 xl:w-4" />
-                    <span className="hidden xl:inline">{item.label}</span>
-                  </Link>;
-            })}
-            </div>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 lg:gap-4 flex-shrink-0">
@@ -153,28 +123,6 @@ export const Navigation = ({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-
-          {/* Mobile Bottom Navigation - Only visible on mobile/tablet */}
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background border-t z-50">
-            <div className="grid grid-cols-5 gap-1 p-2">
-              {navigationItems.map(item => {
-                const Icon = item.icon;
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link 
-                    key={item.href} 
-                    to={item.href} 
-                    className={`flex flex-col items-center justify-center gap-1 py-2 px-1 rounded-md transition-colors ${
-                      isActive ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    <Icon className="h-5 w-5" />
-                    <span className="text-[10px] font-medium truncate w-full text-center">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
           </div>
         </div>
       </div>
