@@ -8,6 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Send, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+
+const messageSchema = z.object({
+  message: z.string().trim().min(1, "Message cannot be empty").max(5000, "Message must be less than 5000 characters")
+});
 
 export const RequestMessagesPage = () => {
   const { requestId } = useParams();
@@ -93,6 +98,17 @@ export const RequestMessagesPage = () => {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
 
+    // Validate message input
+    const validation = messageSchema.safeParse({ message: newMessage.trim() });
+    if (!validation.success) {
+      toast({
+        title: "Invalid message",
+        description: validation.error.errors[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSending(true);
     try {
       const { error } = await supabase
@@ -101,7 +117,7 @@ export const RequestMessagesPage = () => {
           custom_request_id: requestId,
           sender_id: user.id,
           sender_type: 'user',
-          message: newMessage.trim()
+          message: validation.data.message
         });
 
       if (error) throw error;
@@ -112,7 +128,6 @@ export const RequestMessagesPage = () => {
         description: "Your message has been sent successfully.",
       });
     } catch (error) {
-      console.error('Error sending message:', error);
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",

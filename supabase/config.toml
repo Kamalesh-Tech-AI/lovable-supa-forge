@@ -1,1 +1,4 @@
 project_id = "dpkwpfrsruekczjmxubg"
+
+[functions.n8n-chat]
+verify_jwt = true
