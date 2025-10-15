@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User, Settings, Bell, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
 
 export const SettingsPage = () => {
   const [user, setUser] = useState<any>(null);
@@ -16,6 +17,7 @@ export const SettingsPage = () => {
   const [preferences, setPreferences] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -309,13 +311,23 @@ export const SettingsPage = () => {
                 />
               </div>
 
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setShowPasswordDialog(true)}
+              >
                 Change Password
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      <ChangePasswordDialog 
+        open={showPasswordDialog}
+        onOpenChange={setShowPasswordDialog}
+        userEmail={user?.email || ''}
+      />
     </div>
   );
 };
