@@ -31,6 +31,27 @@ export const RequestDetailsPage = () => {
     if (requestId) {
       fetchRequestDetails();
       fetchMilestones();
+
+      // Set up real-time subscription for milestones
+      const channel = supabase
+        .channel('milestone-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'custom_request_milestones',
+            filter: `request_id=eq.${requestId}`
+          },
+          () => {
+            fetchMilestones();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [requestId]);
 

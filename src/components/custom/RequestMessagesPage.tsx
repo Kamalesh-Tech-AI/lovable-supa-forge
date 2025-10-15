@@ -23,11 +23,23 @@ export const RequestMessagesPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [user, setUser] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  const [userRole, setUserRole] = useState<string>('');
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      if (user) {
+        // Fetch user role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+        
+        setUserRole(profile?.role || 'buyer');
+      }
     };
     getUser();
   }, []);
@@ -111,12 +123,15 @@ export const RequestMessagesPage = () => {
 
     setIsSending(true);
     try {
+      // Determine sender type based on role
+      const senderType = userRole === 'admin' ? 'admin' : userRole === 'developer' ? 'developer' : 'buyer';
+      
       const { error } = await supabase
         .from('developer_messages')
         .insert({
           custom_request_id: requestId,
           sender_id: user.id,
-          sender_type: 'user',
+          sender_type: senderType,
           message: validation.data.message
         });
 
@@ -185,7 +200,7 @@ export const RequestMessagesPage = () => {
         <CardHeader>
           <CardTitle>Messages</CardTitle>
           <CardDescription>
-            Communicate with your developer about this project
+            Chat with the admin and developer about this project
           </CardDescription>
         </CardHeader>
         
@@ -197,44 +212,57 @@ export const RequestMessagesPage = () => {
                 <p className="text-sm mt-2">Start a conversation with your developer.</p>
               </div>
             ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${
-                    message.sender_id === user?.id ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+              messages.map((message) => {
+                const isOwnMessage = message.sender_id === user?.id;
+                const senderLabel = message.sender_type === 'admin' ? 'Admin' : 
+                                   message.sender_type === 'developer' ? 'Developer' : 'Buyer';
+                
+                return (
                   <div
-                    className={`flex items-start space-x-2 max-w-[70%] ${
-                      message.sender_id === user?.id ? 'flex-row-reverse space-x-reverse' : ''
-                    }`}
+                    key={message.id}
+                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                   >
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarFallback>
-                        {message.sender_type === 'developer' ? 'D' : 'U'}
-                      </AvatarFallback>
-                    </Avatar>
                     <div
-                      className={`rounded-lg p-3 ${
-                        message.sender_id === user?.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-background border'
+                      className={`flex items-start space-x-2 max-w-[70%] ${
+                        isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
                       }`}
                     >
-                      <p className="text-sm">{message.message}</p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          message.sender_id === user?.id
-                            ? 'text-primary-foreground/70'
-                            : 'text-muted-foreground'
-                        }`}
-                      >
-                        {formatTime(message.created_at)}
-                      </p>
+                      <Avatar className="h-8 w-8 flex-shrink-0">
+                        <AvatarFallback>
+                          {isOwnMessage ? 'You' : senderLabel.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-1">
+                        {!isOwnMessage && (
+                          <span className="text-xs font-medium text-muted-foreground px-1">
+                            {senderLabel}
+                          </span>
+                        )}
+                        <div
+                          className={`rounded-lg p-3 ${
+                            isOwnMessage
+                              ? 'bg-primary text-primary-foreground'
+                              : message.sender_type === 'admin'
+                              ? 'bg-accent text-accent-foreground'
+                              : 'bg-background border'
+                          }`}
+                        >
+                          <p className="text-sm">{message.message}</p>
+                          <p
+                            className={`text-xs mt-1 ${
+                              isOwnMessage
+                                ? 'text-primary-foreground/70'
+                                : 'text-muted-foreground'
+                            }`}
+                          >
+                            {formatTime(message.created_at)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
 
