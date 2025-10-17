@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_buyer_chat: {
+        Row: {
+          attachments: string[] | null
+          created_at: string
+          custom_request_id: string
+          id: string
+          message: string
+          sender_id: string
+          sender_type: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: string[] | null
+          created_at?: string
+          custom_request_id: string
+          id?: string
+          message: string
+          sender_id: string
+          sender_type: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: string[] | null
+          created_at?: string
+          custom_request_id?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_buyer_chat_custom_request_id_fkey"
+            columns: ["custom_request_id"]
+            isOneToOne: false
+            referencedRelation: "custom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_request_milestones: {
         Row: {
           amount: number
@@ -773,6 +814,10 @@ export type Database = {
         Returns: boolean
       }
       is_authenticated_developer: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_developer: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }

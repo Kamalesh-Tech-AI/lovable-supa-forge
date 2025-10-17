@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Send, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,11 +20,15 @@ export const RequestMessagesPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [messages, setMessages] = useState([]);
+  const [adminBuyerMessages, setAdminBuyerMessages] = useState([]);
   const [request, setRequest] = useState(null);
   const [newMessage, setNewMessage] = useState("");
+  const [newAdminBuyerMessage, setNewAdminBuyerMessage] = useState("");
   const [user, setUser] = useState(null);
   const [isSending, setIsSending] = useState(false);
+  const [isSendingAdminBuyer, setIsSendingAdminBuyer] = useState(false);
   const [userRole, setUserRole] = useState<string>('');
+  const [activeTab, setActiveTab] = useState("developer");
 
   useEffect(() => {
     const getUser = async () => {
@@ -48,10 +53,11 @@ export const RequestMessagesPage = () => {
     if (requestId) {
       fetchRequest();
       fetchMessages();
+      fetchAdminBuyerMessages();
 
-      // Subscribe to real-time message updates
-      const channel = supabase
-        .channel('message-updates')
+      // Subscribe to real-time developer message updates
+      const devChannel = supabase
+        .channel('developer-message-updates')
         .on(
           'postgres_changes',
           {
@@ -66,8 +72,26 @@ export const RequestMessagesPage = () => {
         )
         .subscribe();
 
+      // Subscribe to real-time admin-buyer message updates
+      const adminBuyerChannel = supabase
+        .channel('admin-buyer-message-updates')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'admin_buyer_chat',
+            filter: `custom_request_id=eq.${requestId}`
+          },
+          (payload) => {
+            setAdminBuyerMessages((prev) => [...prev, payload.new]);
+          }
+        )
+        .subscribe();
+
       return () => {
-        supabase.removeChannel(channel);
+        supabase.removeChannel(devChannel);
+        supabase.removeChannel(adminBuyerChannel);
       };
     }
   }, [requestId]);
@@ -104,6 +128,21 @@ export const RequestMessagesPage = () => {
       setMessages(data || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
+    }
+  };
+
+  const fetchAdminBuyerMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_buyer_chat')
+        .select('*')
+        .eq('custom_request_id', requestId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setAdminBuyerMessages(data || []);
+    } catch (error) {
+      console.error('Error fetching admin-buyer messages:', error);
     }
   };
 
@@ -150,6 +189,50 @@ export const RequestMessagesPage = () => {
       });
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleSendAdminBuyerMessage = async () => {
+    if (!newAdminBuyerMessage.trim() || !user) return;
+
+    const validation = messageSchema.safeParse({ message: newAdminBuyerMessage.trim() });
+    if (!validation.success) {
+      toast({
+        title: "Invalid message",
+        description: validation.error.errors[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSendingAdminBuyer(true);
+    try {
+      const senderType = userRole === 'admin' ? 'admin' : 'buyer';
+      
+      const { error } = await supabase
+        .from('admin_buyer_chat')
+        .insert({
+          custom_request_id: requestId,
+          sender_id: user.id,
+          sender_type: senderType,
+          message: validation.data.message
+        });
+
+      if (error) throw error;
+
+      setNewAdminBuyerMessage("");
+      toast({
+        title: "Message sent",
+        description: "Your message has been sent successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSendingAdminBuyer(false);
     }
   };
 
@@ -200,103 +283,204 @@ export const RequestMessagesPage = () => {
         <CardHeader>
           <CardTitle>Messages</CardTitle>
           <CardDescription>
-            Chat with the admin and developer about this project
+            Communication channels for your project
           </CardDescription>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col space-y-4 overflow-hidden">
-          <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-muted/20 rounded-lg">
-            {messages.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                <p>No messages yet.</p>
-                <p className="text-sm mt-2">Start a conversation with your developer.</p>
-              </div>
-            ) : (
-              messages.map((message) => {
-                const isOwnMessage = message.sender_id === user?.id;
-                const senderLabel = message.sender_type === 'admin' ? 'Admin' : 
-                                   message.sender_type === 'developer' ? 'Developer' : 'Buyer';
-                
-                return (
-                  <div
-                    key={message.id}
-                    className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`flex items-start space-x-2 max-w-[70%] ${
-                        isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
-                      }`}
-                    >
-                      <Avatar className="h-8 w-8 flex-shrink-0">
-                        <AvatarFallback>
-                          {isOwnMessage ? 'You' : senderLabel.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col space-y-1">
-                        {!isOwnMessage && (
-                          <span className="text-xs font-medium text-muted-foreground px-1">
-                            {senderLabel}
-                          </span>
-                        )}
+        <CardContent className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="developer">Developer Chat</TabsTrigger>
+              <TabsTrigger value="admin">Admin Chat</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="developer" className="flex-1 flex flex-col space-y-4 overflow-hidden">
+              <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-muted/20 rounded-lg">
+                {messages.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <p>No messages yet.</p>
+                    <p className="text-sm mt-2">Start a conversation with your developer.</p>
+                  </div>
+                ) : (
+                  messages.map((message) => {
+                    const isOwnMessage = message.sender_id === user?.id;
+                    const senderLabel = message.sender_type === 'admin' ? 'Admin' : 
+                                       message.sender_type === 'developer' ? 'Developer' : 'Buyer';
+                    
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
                         <div
-                          className={`rounded-lg p-3 ${
-                            isOwnMessage
-                              ? 'bg-primary text-primary-foreground'
-                              : message.sender_type === 'admin'
-                              ? 'bg-accent text-accent-foreground'
-                              : 'bg-background border'
+                          className={`flex items-start space-x-2 max-w-[70%] ${
+                            isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
                           }`}
                         >
-                          <p className="text-sm">{message.message}</p>
-                          <p
-                            className={`text-xs mt-1 ${
-                              isOwnMessage
-                                ? 'text-primary-foreground/70'
-                                : 'text-muted-foreground'
-                            }`}
-                          >
-                            {formatTime(message.created_at)}
-                          </p>
+                          <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarFallback>
+                              {isOwnMessage ? 'You' : senderLabel.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col space-y-1">
+                            {!isOwnMessage && (
+                              <span className="text-xs font-medium text-muted-foreground px-1">
+                                {senderLabel}
+                              </span>
+                            )}
+                            <div
+                              className={`rounded-lg p-3 ${
+                                isOwnMessage
+                                  ? 'bg-primary text-primary-foreground'
+                                  : message.sender_type === 'admin'
+                                  ? 'bg-accent text-accent-foreground'
+                                  : 'bg-background border'
+                              }`}
+                            >
+                              <p className="text-sm">{message.message}</p>
+                              <p
+                                className={`text-xs mt-1 ${
+                                  isOwnMessage
+                                    ? 'text-primary-foreground/70'
+                                    : 'text-muted-foreground'
+                                }`}
+                              >
+                                {formatTime(message.created_at)}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+                    );
+                  })
+                )}
+              </div>
 
-          <div className="flex items-end space-x-2 pt-4 border-t">
-            <Textarea
-              placeholder="Type your message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendMessage();
-                }
-              }}
-              className="min-h-[80px] resize-none"
-            />
-            <div className="flex flex-col space-y-2">
-              <Button
-                size="icon"
-                variant="outline"
-                disabled
-                title="Attachments coming soon"
-              >
-                <Paperclip className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
-                onClick={handleSendMessage}
-                disabled={!newMessage.trim() || isSending}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+              <div className="flex items-end space-x-2 pt-4 border-t">
+                <Textarea
+                  placeholder="Type your message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                  className="min-h-[80px] resize-none"
+                />
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    disabled
+                    title="Attachments coming soon"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    onClick={handleSendMessage}
+                    disabled={!newMessage.trim() || isSending}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="admin" className="flex-1 flex flex-col space-y-4 overflow-hidden">
+              <div className="flex-1 overflow-y-auto space-y-4 p-4 bg-muted/20 rounded-lg">
+                {adminBuyerMessages.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <p>No admin messages yet.</p>
+                    <p className="text-sm mt-2">Start a private conversation with the admin.</p>
+                  </div>
+                ) : (
+                  adminBuyerMessages.map((message) => {
+                    const isOwnMessage = message.sender_id === user?.id;
+                    const senderLabel = message.sender_type === 'admin' ? 'Admin' : 'You';
+                    
+                    return (
+                      <div
+                        key={message.id}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`flex items-start space-x-2 max-w-[70%] ${
+                            isOwnMessage ? 'flex-row-reverse space-x-reverse' : ''
+                          }`}
+                        >
+                          <Avatar className="h-8 w-8 flex-shrink-0">
+                            <AvatarFallback>
+                              {message.sender_type === 'admin' ? 'A' : 'B'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col space-y-1">
+                            {!isOwnMessage && (
+                              <span className="text-xs font-medium text-muted-foreground px-1">
+                                {senderLabel}
+                              </span>
+                            )}
+                            <div
+                              className={`rounded-lg p-3 ${
+                                isOwnMessage
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-accent text-accent-foreground'
+                              }`}
+                            >
+                              <p className="text-sm">{message.message}</p>
+                              <p
+                                className={`text-xs mt-1 ${
+                                  isOwnMessage
+                                    ? 'text-primary-foreground/70'
+                                    : 'text-muted-foreground'
+                                }`}
+                              >
+                                {formatTime(message.created_at)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="flex items-end space-x-2 pt-4 border-t">
+                <Textarea
+                  placeholder="Type your message to admin..."
+                  value={newAdminBuyerMessage}
+                  onChange={(e) => setNewAdminBuyerMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendAdminBuyerMessage();
+                    }
+                  }}
+                  className="min-h-[80px] resize-none"
+                />
+                <div className="flex flex-col space-y-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    disabled
+                    title="Attachments coming soon"
+                  >
+                    <Paperclip className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    onClick={handleSendAdminBuyerMessage}
+                    disabled={!newAdminBuyerMessage.trim() || isSendingAdminBuyer}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
