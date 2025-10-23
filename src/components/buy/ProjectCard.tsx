@@ -29,6 +29,7 @@ interface ProjectCardProps {
 
 export const ProjectCard = ({ project, onProjectClick }: ProjectCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>('/placeholder.svg');
 
   const handleLikeToggle = async () => {
     try {
@@ -61,27 +62,59 @@ export const ProjectCard = ({ project, onProjectClick }: ProjectCardProps) => {
     }
   };
 
+  // Get public URL for the screenshot
+  useState(() => {
+    const loadImage = async () => {
+      if (project.screenshot_url && !project.screenshot_url.startsWith('/')) {
+        // Get public URL from Supabase storage
+        const { data } = supabase.storage
+          .from('project-files')
+          .getPublicUrl(project.screenshot_url);
+        
+        if (data?.publicUrl) {
+          setImageUrl(data.publicUrl);
+        }
+      } else if (project.screenshot_url) {
+        setImageUrl(project.screenshot_url);
+      }
+    };
+    loadImage();
+  });
+
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors">
-              {project.title}
-            </CardTitle>
-            <CardDescription className="text-sm line-clamp-2">
-              {project.description}
-            </CardDescription>
-          </div>
+    <Card className="group hover:shadow-lg transition-all duration-300 h-full flex flex-col overflow-hidden">
+      {/* Project Screenshot */}
+      <div className="relative w-full aspect-video overflow-hidden bg-muted">
+        <img 
+          src={imageUrl} 
+          alt={project.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.currentTarget.src = '/placeholder.svg';
+          }}
+        />
+        <div className="absolute top-2 right-2">
           <Button
             variant="ghost"
             size="sm"
-            className="ml-2"
-            onClick={handleLikeToggle}
+            className="bg-background/80 backdrop-blur-sm hover:bg-background"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleLikeToggle();
+            }}
           >
             <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
           </Button>
         </div>
+      </div>
+
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors">
+          {project.title}
+        </CardTitle>
+        <CardDescription className="text-sm line-clamp-2">
+          {project.description}
+        </CardDescription>
         
         <div className="flex items-center space-x-3 mt-3">
           <Avatar className="h-8 w-8">
